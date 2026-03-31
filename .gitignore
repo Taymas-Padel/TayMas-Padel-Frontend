@@ -1,20 +1,33 @@
-# Виртуальное окружение
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Python virtual environments/cache
 .venv/
 venv/
-
-# Python cache
 __pycache__/
 *.py[cod]
 *.pyo
 
-# macOS
-.DS_Store
-
-# Логи
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# IDE / редакторы
+# IDE/editor
 .vscode/
 .idea/
 *.swp
 *~
+
+# OS
+.DS_Store
