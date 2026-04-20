@@ -1,4 +1,4 @@
-const FALLBACK_API_URL = 'http://213.155.23.227/api'
+const FALLBACK_API_URL = 'https://213.155.23.227/api'
 
 function getApiOrigin(): string {
   const raw = import.meta.env.VITE_API_URL ?? FALLBACK_API_URL

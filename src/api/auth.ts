@@ -2,7 +2,7 @@ import axios from 'axios'
 import type { LoginResponse, TokenRefreshResponse } from '@/types/auth'
 
 // В dev (в т.ч. через ngrok) запросы идут на тот же хост и проксируются — нет mixed content и CORS
-const BASE_URL = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL ?? 'http://213.155.23.227/api')
+const BASE_URL = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL ?? 'https://213.155.23.227/api')
 
 // Use plain axios (no interceptors) for auth endpoints to avoid circular refresh
 const authAxios = axios.create({ baseURL: BASE_URL })

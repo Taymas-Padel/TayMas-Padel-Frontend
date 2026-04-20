@@ -2,7 +2,7 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '@/store/authStore'
 
 // В dev (в т.ч. через ngrok) запросы идут на тот же хост и проксируются — нет mixed content и CORS
-const BASE_URL = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL ?? 'http://213.155.23.227/api')
+const BASE_URL = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL ?? 'https://213.155.23.227/api')
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,

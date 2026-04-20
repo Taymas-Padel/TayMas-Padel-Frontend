@@ -9,16 +9,19 @@ export default defineConfig({
     allowedHosts: ['3ea1-37-151-151-73.ngrok-free.app'],
     proxy: {
       '/api': {
-        target: 'http://213.155.23.227',
+        target: 'https://213.155.23.227',
         changeOrigin: true,
+        secure: false,
       },
       '/media': {
-        target: 'http://213.155.23.227',
+        target: 'https://213.155.23.227',
         changeOrigin: true,
+        secure: false,
       },
       '/static': {
-        target: 'http://213.155.23.227',
+        target: 'https://213.155.23.227',
         changeOrigin: true,
+        secure: false,
       },
     },
   },
