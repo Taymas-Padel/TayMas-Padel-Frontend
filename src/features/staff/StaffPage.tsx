@@ -26,6 +26,7 @@ import { parseApiError } from '@/utils/error'
 import { cn } from '@/utils/cn'
 import { formatMoney, getInitials } from '@/utils/format'
 import type { StaffMember, StaffRole } from '@/types/staff'
+import { resolveMediaUrl } from '@/utils/media'
 
 const ROLE_LABELS: Record<StaffRole, string> = {
   ADMIN: 'Администратор',
@@ -485,7 +486,7 @@ export function StaffPage() {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-xl overflow-hidden bg-white">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -511,7 +512,7 @@ export function StaffPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={member.avatar ?? undefined} />
+                            <AvatarImage src={resolveMediaUrl(member.avatar)} />
                             <AvatarFallback className="text-xs">
                               {getInitials(member.first_name, member.last_name)}
                             </AvatarFallback>

@@ -31,7 +31,6 @@ export function DirectorDashboard() {
         description={data?.period.month}
       />
 
-      {/* Row 1 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           title="Выручка сегодня"
@@ -60,7 +59,6 @@ export function DirectorDashboard() {
         />
       </div>
 
-      {/* Row 2 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           title="Загрузка сегодня"
@@ -89,11 +87,10 @@ export function DirectorDashboard() {
         />
       </div>
 
-      {/* Revenue structure */}
       {data?.revenue_structure && (
         <Card>
           <CardHeader>
-            <CardTitle>Структура выручки</CardTitle>
+            <CardTitle className="text-base">Структура выручки</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -102,17 +99,17 @@ export function DirectorDashboard() {
                 const percent = total > 0 ? Math.round((item.amount / total) * 100) : 0
                 return (
                   <div key={item.type} className="flex items-center gap-4">
-                    <div className="w-40 text-sm text-muted-foreground shrink-0">{item.label}</div>
-                    <div className="flex-1 bg-slate-100 rounded-full h-2">
+                    <div className="w-36 text-sm text-muted-foreground shrink-0 truncate">{item.label}</div>
+                    <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
                       <div
-                        className="bg-primary h-2 rounded-full"
+                        className="bg-primary h-full rounded-full transition-all duration-500"
                         style={{ width: `${percent}%` }}
                       />
                     </div>
-                    <div className="w-32 text-sm font-medium text-right shrink-0">
+                    <div className="w-28 text-sm font-semibold text-right shrink-0 tabular-nums">
                       {formatMoney(item.amount)}
                     </div>
-                    <div className="w-10 text-xs text-muted-foreground shrink-0 text-right">
+                    <div className="w-12 text-xs text-muted-foreground shrink-0 text-right tabular-nums">
                       {percent}%
                     </div>
                   </div>
@@ -120,7 +117,7 @@ export function DirectorDashboard() {
               })}
             </div>
             {data.work_hours && (
-              <p className="text-xs text-muted-foreground mt-4">
+              <p className="text-xs text-muted-foreground mt-5 pt-4 border-t border-slate-100">
                 Часы работы клуба: {data.work_hours}
               </p>
             )}
@@ -128,7 +125,6 @@ export function DirectorDashboard() {
         </Card>
       )}
 
-      {/* Additional KPIs */}
       <div className="grid grid-cols-2 gap-4">
         <KpiCard
           title="Ожидают оплаты"

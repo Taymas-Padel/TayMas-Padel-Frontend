@@ -6,9 +6,17 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
-    allowedHosts: ['486b-2a03-32c0-3007-1ec-a4dd-84b2-a324-a644.ngrok-free.app'],
+    allowedHosts: ['3ea1-37-151-151-73.ngrok-free.app'],
     proxy: {
       '/api': {
+        target: 'http://213.155.23.227',
+        changeOrigin: true,
+      },
+      '/media': {
+        target: 'http://213.155.23.227',
+        changeOrigin: true,
+      },
+      '/static': {
         target: 'http://213.155.23.227',
         changeOrigin: true,
       },

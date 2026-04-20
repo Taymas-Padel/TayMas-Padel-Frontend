@@ -21,6 +21,7 @@ import { formatMoney } from '@/utils/format'
 import { parseApiError } from '@/utils/error'
 import { cn } from '@/utils/cn'
 import type { Service, ServiceGroup, ServiceCategory } from '@/types/court'
+import { resolveMediaUrl } from '@/utils/media'
 
 const GROUP_LABELS: Record<ServiceGroup, string> = {
   PADEL: 'Падел',
@@ -86,7 +87,7 @@ function ServiceFormDialog({ service, open, onClose }: ServiceFormDialogProps) {
         is_active: service?.is_active ?? true,
       })
       setImageFile(null)
-      setImagePreview(service?.image ?? null)
+      setImagePreview(resolveMediaUrl(service?.image ?? null) ?? null)
     }
   }, [open, service, reset])
 
@@ -326,7 +327,7 @@ export function ServicesPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {s.image ? (
-                            <img src={s.image} alt={s.name} className="h-10 w-10 rounded-md object-cover flex-shrink-0 border" />
+                            <img src={resolveMediaUrl(s.image)} alt={s.name} className="h-10 w-10 rounded-md object-cover flex-shrink-0 border" />
                           ) : (
                             <div className="h-10 w-10 rounded-md bg-muted flex-shrink-0 border" />
                           )}

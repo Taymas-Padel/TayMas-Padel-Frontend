@@ -6,19 +6,31 @@ import { cn } from '@/utils/cn'
 
 export function AppLayout() {
   const sidebarOpen = useUiStore((s) => s.sidebarOpen)
+  const mobileSidebarOpen = useUiStore((s) => s.mobileSidebarOpen)
+  const setMobileSidebarOpen = useUiStore((s) => s.setMobileSidebarOpen)
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50/80 overflow-hidden">
       <Sidebar />
+      {mobileSidebarOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 bg-slate-950/40 md:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-label="Закрыть меню"
+        />
+      )}
       <div
         className={cn(
-          'flex flex-col flex-1 overflow-hidden transition-all duration-200',
-          sidebarOpen ? 'ml-64' : 'ml-16'
+          'flex flex-col flex-1 overflow-hidden transition-all duration-300',
+          sidebarOpen ? 'md:ml-64' : 'md:ml-[68px]'
         )}
       >
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-4 md:p-6 max-w-[1600px] mx-auto animate-in">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

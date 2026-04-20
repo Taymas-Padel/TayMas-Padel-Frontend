@@ -17,6 +17,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { getInitials } from '@/utils/format'
 import { formatDate } from '@/utils/date'
 import { ROUTES } from '@/constants/routes'
+import { resolveMediaUrl } from '@/utils/media'
 
 const ROLE_LABELS: Record<string, string> = {
   CLIENT: 'Клиент',
@@ -40,21 +41,23 @@ export function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="База клиентов" description={`${clients.length} записей`} />
+      <PageHeader
+        title="База клиентов"
+        description={isLoading ? 'Загрузка...' : `${clients.length} записей`}
+      />
 
-      {/* Filters */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Поиск по имени, телефону..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-10"
           />
         </div>
         <Select value={role} onValueChange={setRole}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-44 h-10">
             <SelectValue placeholder="Все роли" />
           </SelectTrigger>
           <SelectContent>
@@ -66,13 +69,12 @@ export function ClientsPage() {
         </Select>
       </div>
 
-      {/* Table */}
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 space-y-3">
               {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <Skeleton key={i} className="h-14 w-full" />
               ))}
             </div>
           ) : clients.length === 0 ? (
@@ -103,9 +105,9 @@ export function ClientsPage() {
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={client.avatar ?? undefined} alt="" className="object-cover" />
-                          <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={resolveMediaUrl(client.avatar)} alt="" className="object-cover" />
+                          <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
                             {getInitials(client.first_name, client.last_name)}
                           </AvatarFallback>
                         </Avatar>
@@ -114,12 +116,12 @@ export function ClientsPage() {
                             {client.first_name} {client.last_name}
                           </p>
                           {!client.is_profile_complete && (
-                            <p className="text-xs text-amber-600">Профиль не заполнен</p>
+                            <p className="text-[11px] text-amber-600">Профиль не заполнен</p>
                           )}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm">{client.phone_number}</TableCell>
+                    <TableCell className="text-sm tabular-nums">{client.phone_number}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
                         {ROLE_LABELS[client.role] ?? client.role}
@@ -128,7 +130,7 @@ export function ClientsPage() {
                     <TableCell>
                       <QrStatusBadge isBlocked={client.is_qr_blocked} />
                     </TableCell>
-                    <TableCell className="text-sm">{client.rating_elo}</TableCell>
+                    <TableCell className="text-sm font-medium tabular-nums">{client.rating_elo}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(client.created_at)}
                     </TableCell>

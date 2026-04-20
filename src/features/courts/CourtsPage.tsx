@@ -21,6 +21,7 @@ import { getCourtsManage, createCourt, updateCourt, deleteCourt, addCourtGallery
 import { formatMoney } from '@/utils/format'
 import { parseApiError } from '@/utils/error'
 import type { Court, CourtType, PlayFormat, CourtPriceSlot } from '@/types/court'
+import { resolveMediaUrl } from '@/utils/media'
 
 const COURT_TYPE_LABELS: Record<CourtType, string> = {
   INDOOR: 'Крытый',
@@ -84,7 +85,7 @@ function CourtFormDialog({ court, open, onClose }: CourtFormDialogProps) {
         is_active: court?.is_active ?? true,
       })
       setImageFile(null)
-      setImagePreview(court?.image ?? null)
+      setImagePreview(resolveMediaUrl(court?.image ?? null) ?? null)
       setGallery(court?.gallery ?? [])
       setPriceSlots(court?.price_slots ?? [])
     }
@@ -370,7 +371,7 @@ function CourtFormDialog({ court, open, onClose }: CourtFormDialogProps) {
                 <div className="grid grid-cols-3 gap-2">
                   {gallery.map((g) => (
                     <div key={g.id} className="relative group aspect-square rounded-md overflow-hidden border">
-                      <img src={g.image} alt="" className="w-full h-full object-cover" />
+                      <img src={resolveMediaUrl(g.image)} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -431,7 +432,7 @@ export function CourtsPage() {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-xl overflow-hidden bg-white">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -450,7 +451,7 @@ export function CourtsPage() {
                   <TableRow key={c.id}>
                     <TableCell>
                       {c.image ? (
-                        <img src={c.image} alt="" className="h-9 w-12 object-cover rounded" />
+                        <img src={resolveMediaUrl(c.image)} alt="" className="h-9 w-12 object-cover rounded" />
                       ) : (
                         <div className="h-9 w-12 rounded bg-muted" />
                       )}

@@ -59,26 +59,25 @@ export function ProfilePage() {
     <div className="max-w-2xl space-y-6">
       <PageHeader title="Мой профиль" description="Информация об аккаунте и настройки безопасности" />
 
-      {/* User info card */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-4">
           <CardTitle className="text-base flex items-center gap-2">
-            <User className="h-4 w-4" />
+            <User className="h-4 w-4 text-muted-foreground" />
             Информация об аккаунте
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <Avatar className="h-16 w-16">
-              <AvatarFallback className="text-lg bg-primary text-primary-foreground">
+              <AvatarFallback className="text-lg font-semibold bg-primary text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <p className="text-xl font-semibold">{fullName}</p>
               <div className="flex items-center gap-2">
                 <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline">
                   {role ? ROLE_LABELS[role] : '—'}
                 </Badge>
               </div>
@@ -88,32 +87,31 @@ export function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Change password card */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-4">
           <CardTitle className="text-base flex items-center gap-2">
-            <KeyRound className="h-4 w-4" />
+            <KeyRound className="h-4 w-4 text-muted-foreground" />
             Изменить пароль
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit((v) => pwMutation.mutate(v))} className="space-y-4 max-w-sm">
-            <div className="space-y-1">
-              <Label>Новый пароль *</Label>
-              <Input {...register('new_password')} type="password" autoComplete="new-password" />
+            <div className="space-y-1.5">
+              <Label>Новый пароль</Label>
+              <Input {...register('new_password')} type="password" autoComplete="new-password" className="h-10" />
               {errors.new_password && (
                 <p className="text-xs text-destructive">{errors.new_password.message}</p>
               )}
             </div>
-            <div className="space-y-1">
-              <Label>Повторите пароль *</Label>
-              <Input {...register('new_password_confirm')} type="password" autoComplete="new-password" />
+            <div className="space-y-1.5">
+              <Label>Повторите пароль</Label>
+              <Input {...register('new_password_confirm')} type="password" autoComplete="new-password" className="h-10" />
               {errors.new_password_confirm && (
                 <p className="text-xs text-destructive">{errors.new_password_confirm.message}</p>
               )}
             </div>
             <Button type="submit" disabled={pwMutation.isPending}>
-              {pwMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {pwMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Сменить пароль
             </Button>
           </form>

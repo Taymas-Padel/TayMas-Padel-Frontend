@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CalendarCheck, Clock, DollarSign, AlertCircle } from 'lucide-react'
+import { CalendarCheck, Clock, DollarSign, Activity } from 'lucide-react'
 import { toast } from 'sonner'
 import { KpiCard } from '@/components/shared/KpiCard'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { PaymentBadge } from '@/components/shared/StatusBadge'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { getReceptionDashboard } from '@/api/analytics'
 import { getAllBookings, confirmPayment } from '@/api/bookings'
 import { formatMoney } from '@/utils/format'
@@ -23,15 +24,12 @@ export function ReceptionDashboard() {
     refetchInterval: 2 * 60 * 1000,
   })
 
-  // Fetch today's bookings directly — more reliable than analytics upcoming_bookings
-  // since analytics may not reflect auto-completed bookings in real time.
   const { data: todayBookings = [] } = useQuery({
     queryKey: ['bookings', { date: todayISO() }],
     queryFn: () => getAllBookings({ date: todayISO() }),
     refetchInterval: 2 * 60 * 1000,
   })
 
-  // Show confirmed/pending bookings that haven't ended yet
   const upcomingBookings = useMemo(() => {
     const now = new Date()
     return todayBookings
@@ -80,18 +78,23 @@ export function ReceptionDashboard() {
         <KpiCard
           title="Статус"
           value="Работаем"
-          icon={<AlertCircle className="h-5 w-5" />}
+          icon={<Activity className="h-5 w-5" />}
           isLoading={isLoading}
         />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Ближайшие бронирования</CardTitle>
+          <CardTitle className="text-base">Ближайшие бронирования</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {upcomingBookings.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Нет предстоящих бронирований</p>
+            <EmptyState
+              icon={<CalendarCheck className="h-8 w-8" />}
+              title="Нет предстоящих бронирований"
+              description="На сегодня все брони завершены или отсутствуют"
+              className="py-12"
+            />
           ) : (
             <Table>
               <TableHeader>

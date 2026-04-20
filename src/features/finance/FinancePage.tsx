@@ -99,13 +99,13 @@ function TransactionTable() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : transactions.length === 0 ? (
-        <p className="text-center py-12 text-muted-foreground">Транзакции не найдены</p>
+        <p className="text-center py-16 text-muted-foreground text-sm">Транзакции не найдены</p>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-xl overflow-hidden bg-white">
           <Table>
             <TableHeader>
               <TableRow>
@@ -164,8 +164,8 @@ function SummaryTab() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : data ? (
         <div className="space-y-4">

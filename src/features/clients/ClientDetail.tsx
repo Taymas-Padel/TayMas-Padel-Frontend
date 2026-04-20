@@ -23,6 +23,7 @@ import { formatDate, formatDatetime } from '@/utils/date'
 import { parseApiError } from '@/utils/error'
 import { usePermissions } from '@/hooks/usePermissions'
 import type { ClientUser } from '@/types/client'
+import { resolveMediaUrl } from '@/utils/media'
 
 export function ClientDetail() {
   const { id } = useParams<{ id: string }>()
@@ -135,7 +136,7 @@ export function ClientDetail() {
         <CardContent className="p-6">
           <div className="flex items-start gap-6">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={avatarSrc ?? undefined} alt="" className="object-cover" />
+              <AvatarImage src={resolveMediaUrl(avatarSrc)} alt="" className="object-cover" />
               <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                 {getInitials(client.first_name, client.last_name)}
               </AvatarFallback>
