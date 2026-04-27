@@ -23,12 +23,12 @@ export function AppLayout() {
       <div
         className={cn(
           'flex flex-col flex-1 overflow-hidden transition-all duration-300',
-          sidebarOpen ? 'md:ml-64' : 'md:ml-[68px]'
+          sidebarOpen ? 'md:ml-[240px] lg:ml-64 xl:ml-72' : 'md:ml-[68px]'
         )}
       >
         <Header />
         <main className="flex-1 overflow-y-auto">
-          <div className="p-4 md:p-6 max-w-[1600px] mx-auto animate-in">
+          <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] w-full mx-auto animate-in">
             <Outlet />
           </div>
         </main>

@@ -214,7 +214,7 @@ export function Sidebar() {
         className={cn(
           'fixed left-0 top-0 h-full hidden md:flex flex-col transition-all duration-300 z-40',
           'bg-slate-900 text-slate-100 border-r border-slate-800',
-          sidebarOpen ? 'w-64' : 'w-[68px]'
+          sidebarOpen ? 'w-[240px] lg:w-64 xl:w-72' : 'w-[68px]'
         )}
       >
         {/* Logo */}
@@ -240,19 +240,29 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
+        <nav
+          className={cn(
+            'flex-1 overflow-y-auto py-3 space-y-1',
+            sidebarOpen
+              ? 'px-2 lg:px-3'
+              : 'px-0 overflow-x-hidden [scrollbar-gutter:stable] flex flex-col items-center'
+          )}
+        >
           {visibleSections.map((section, idx) => {
             return (
-              <div key={section.title} className="mb-1">
+              <div
+                key={section.title}
+                className={cn('mb-1', !sidebarOpen && 'w-full flex flex-col items-center')}
+              >
                 {sidebarOpen && (
                   <p className={cn('px-3 mb-1 text-[11px] font-medium text-slate-500 uppercase tracking-widest', idx > 0 && 'mt-4')}>
                     {section.title}
                   </p>
                 )}
                 {!sidebarOpen && idx > 0 && (
-                  <div className="mx-2 my-2 h-px bg-slate-700/50" />
+                  <div className="my-2 h-px w-8 bg-slate-700/50" />
                 )}
-                <div className="space-y-0.5">
+                <div className={cn('space-y-0.5', !sidebarOpen && 'w-full flex flex-col items-center')}>
                   {section.items.map((item) => (
                     <SidebarNavItem key={item.to} item={item} sidebarOpen={sidebarOpen} />
                   ))}
@@ -267,9 +277,9 @@ export function Sidebar() {
           <button
             onClick={toggleSidebar}
             className={cn(
-              'flex items-center w-full rounded-lg text-sm transition-colors',
+              'flex items-center w-full text-sm transition-colors',
               'text-slate-400 hover:text-white hover:bg-slate-800',
-              sidebarOpen ? 'gap-3 px-3 py-2' : 'justify-center py-2'
+              sidebarOpen ? 'gap-3 rounded-lg px-3 py-2' : 'mx-auto h-10 w-10 justify-center rounded-xl'
             )}
             aria-label={sidebarOpen ? 'Свернуть' : 'Развернуть'}
           >
@@ -286,7 +296,7 @@ export function Sidebar() {
       </aside>
       <aside
         className={cn(
-          'fixed left-0 top-0 h-full w-72 md:hidden flex flex-col z-40',
+          'fixed left-0 top-0 h-full w-[min(20rem,calc(100vw-0.75rem))] md:hidden flex flex-col z-40',
           'bg-slate-900 text-slate-100 border-r border-slate-800 transition-transform duration-300',
           mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
@@ -349,8 +359,8 @@ function SidebarNavItem({
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
-          'flex items-center rounded-lg text-sm font-medium transition-all duration-150',
-          sidebarOpen ? 'gap-3 px-3 py-2' : 'justify-center w-10 h-10 mx-auto',
+          'flex items-center text-sm font-medium transition-colors duration-150',
+          sidebarOpen ? 'gap-3 px-3 py-2 rounded-lg' : 'h-10 w-10 justify-center rounded-xl',
           isActive
             ? 'bg-primary/15 text-white'
             : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100'
