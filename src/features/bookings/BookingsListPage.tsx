@@ -10,6 +10,7 @@ import { BookingStatusBadge, PaymentBadge } from '@/components/shared/StatusBadg
 import { BookingDetailModal } from './components/BookingDetailModal'
 import { CreateBookingModal } from './components/CreateBookingModal'
 import { getAllBookings } from '@/api/bookings'
+import { getSettings } from '@/api/core'
 import { formatDatetime, todayISO, effectiveBookingStatus } from '@/utils/date'
 import { formatMoney } from '@/utils/format'
 import type { Booking } from '@/types/booking'
@@ -21,6 +22,18 @@ const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'COMPLETED', label: 'Завершено' },
   { value: 'CANCELED', label: 'Отменено' },
 ]
+
+function parseOpenHour(openTime: string | undefined): number {
+  if (!openTime) return 7
+  const [h] = openTime.split(':').map(Number)
+  return h
+}
+
+function parseCloseHour(closeTime: string | undefined, startHour: number): number {
+  if (!closeTime) return 23
+  const [h] = closeTime.split(':').map(Number)
+  return h < startHour ? h + 24 : h
+}
 
 export function BookingsListPage() {
   const [date, setDate] = useState(todayISO())
@@ -34,6 +47,14 @@ export function BookingsListPage() {
     queryKey: ['bookings', { date }],
     queryFn: () => getAllBookings({ date: date || undefined }),
   })
+
+  const { data: settings = [] } = useQuery({
+    queryKey: ['club-settings'],
+    queryFn: getSettings,
+  })
+
+  const startHour = parseOpenHour(settings.find((s) => s.key === 'OPEN_TIME')?.value)
+  const endHour = parseCloseHour(settings.find((s) => s.key === 'CLOSE_TIME')?.value, startHour)
 
   const bookings = useMemo(() => {
     if (status === '_all') return allBookings
@@ -55,7 +76,7 @@ export function BookingsListPage() {
         }
       />
 
-      <div className="flex gap-3 flex-wrap items-center">
+      <div className="surface-elevated rounded-xl p-3 flex gap-3 flex-wrap items-center">
         <Input
           type="date"
           value={date}
@@ -90,7 +111,7 @@ export function BookingsListPage() {
       ) : bookings.length === 0 ? (
         <p className="text-center py-16 text-muted-foreground text-sm">Бронирования не найдены</p>
       ) : (
-        <div className="border rounded-xl overflow-hidden bg-white">
+        <div className="surface-elevated rounded-xl overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -132,7 +153,12 @@ export function BookingsListPage() {
         open={!!selectedBooking}
         onClose={() => setSelectedBooking(null)}
       />
-      <CreateBookingModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <CreateBookingModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        openHour={startHour}
+        closeHour={endHour}
+      />
     </div>
   )
 }

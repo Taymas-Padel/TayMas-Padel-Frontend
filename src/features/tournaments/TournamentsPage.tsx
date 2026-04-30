@@ -29,12 +29,15 @@ export const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
   CANCELED: 'Отменён',
 }
 
-export const TOURNAMENT_STATUS_COLORS: Record<TournamentStatus, string> = {
-  DRAFT: 'bg-slate-100 text-slate-700 border-slate-200',
-  REGISTRATION: 'bg-blue-100 text-blue-800 border-blue-200',
-  IN_PROGRESS: 'bg-green-100 text-green-800 border-green-200',
-  COMPLETED: 'bg-purple-100 text-purple-800 border-purple-200',
-  CANCELED: 'bg-red-100 text-red-800 border-red-200',
+export const TOURNAMENT_STATUS_BADGE_VARIANTS: Record<
+  TournamentStatus,
+  'secondary' | 'info' | 'success' | 'default' | 'destructive'
+> = {
+  DRAFT: 'secondary',
+  REGISTRATION: 'info',
+  IN_PROGRESS: 'success',
+  COMPLETED: 'default',
+  CANCELED: 'destructive',
 }
 
 const FORMAT_LABELS: Record<TournamentFormat, string> = {
@@ -203,16 +206,13 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
   return (
     <div
       onClick={() => navigate(ROUTES.TOURNAMENT_DETAIL(tournament.id))}
-      className="border rounded-xl p-5 bg-white hover:border-primary/50 hover:shadow-sm cursor-pointer transition-all group"
+      className="border rounded-xl p-5 bg-card hover:border-primary/50 hover:shadow-sm cursor-pointer transition-all group"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h3 className="font-semibold text-base truncate">{tournament.name}</h3>
-            <Badge
-              variant="outline"
-              className={cn('text-xs shrink-0', TOURNAMENT_STATUS_COLORS[tournament.status])}
-            >
+            <Badge variant={TOURNAMENT_STATUS_BADGE_VARIANTS[tournament.status]} className="text-xs shrink-0">
               {TOURNAMENT_STATUS_LABELS[tournament.status]}
             </Badge>
           </div>

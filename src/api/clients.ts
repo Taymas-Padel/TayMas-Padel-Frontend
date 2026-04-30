@@ -1,6 +1,21 @@
 import { apiClient } from './client'
 import type { ClientUser, UserActionResponse } from '@/types/client'
 
+export interface MobileSendCodeResponse {
+  message: string
+  phone: string
+}
+
+export interface MobileLoginResponse {
+  refresh: string
+  access: string
+  is_new_user: boolean
+  is_profile_complete: boolean
+  role: string
+  user_id: number
+  is_qr_blocked: boolean
+}
+
 export async function getClients(params?: {
   search?: string
   role?: string
@@ -13,6 +28,20 @@ export async function searchByPhone(phone: string): Promise<ClientUser[]> {
   const { data } = await apiClient.get<ClientUser[]>('/auth/reception/search/', {
     params: { phone },
   })
+  return data
+}
+
+export async function sendMobileCode(phone_number: string): Promise<MobileSendCodeResponse> {
+  const { data } = await apiClient.post<MobileSendCodeResponse>('/auth/mobile/send-code/', { phone_number })
+  return data
+}
+
+export async function mobileLogin(params: {
+  phone_number: string
+  code: string
+  device_id: string
+}): Promise<MobileLoginResponse> {
+  const { data } = await apiClient.post<MobileLoginResponse>('/auth/mobile/login/', params)
   return data
 }
 

@@ -16,6 +16,9 @@ import { getInitials } from '@/utils/format'
 import { ROUTES } from '@/constants/routes'
 import { NotificationDropdown } from '@/features/notifications/NotificationDropdown'
 import { useUiStore } from '@/store/uiStore'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
+import { useThemeStore } from '@/store/themeStore'
+import { BRAND_MARK_GREEN, BRAND_MARK_WHITE } from '@/constants/brandAssets'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Дашборд ресепшн',
@@ -43,7 +46,7 @@ function resolveTitle(pathname: string): string {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname]
   if (pathname.startsWith('/clients/')) return 'Карточка клиента'
   if (pathname.startsWith('/tournaments/')) return 'Турнир'
-  return 'CRM Padel'
+  return 'TAYMAS CRM'
 }
 
 export function Header() {
@@ -51,6 +54,8 @@ export function Header() {
   const navigate = useNavigate()
   const location = useLocation()
   const toggleMobileSidebar = useUiStore((s) => s.toggleMobileSidebar)
+  const theme = useThemeStore((s) => s.theme)
+  const headerMarkSrc = theme === 'dark' ? BRAND_MARK_WHITE : BRAND_MARK_GREEN
 
   const pageTitle = resolveTitle(location.pathname)
   const initials = user ? getInitials(user.firstName, user.lastName) : 'U'
@@ -62,7 +67,7 @@ export function Header() {
   }
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200/80 flex items-center px-4 md:px-6 gap-3 md:gap-4 shrink-0">
+    <header className="surface-elevated h-16 border-b border-border/80 flex items-center px-4 md:px-6 gap-3 md:gap-4 shrink-0">
       <Button
         variant="ghost"
         size="icon"
@@ -72,9 +77,23 @@ export function Header() {
       >
         <Menu className="h-5 w-5" />
       </Button>
-      <h1 className="text-lg font-semibold text-slate-800 flex-1 truncate">{pageTitle}</h1>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <img
+          src={headerMarkSrc}
+          alt=""
+          width={40}
+          height={40}
+          className="hidden sm:block h-9 w-9 shrink-0 object-contain opacity-95"
+          aria-hidden
+        />
+        <div className="min-w-0">
+          <p className="brand-label hidden lg:block">taymas crm</p>
+          <h1 className="text-lg font-semibold tracking-tight text-foreground truncate">{pageTitle}</h1>
+        </div>
+      </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
+        <ThemeToggle />
         <NotificationDropdown />
 
         <DropdownMenu>

@@ -73,7 +73,7 @@ export function NotificationDropdown() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[360px] p-0">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h4 className="text-sm font-semibold">Уведомления</h4>
           {unreadCount > 0 && (
             <Button
@@ -97,8 +97,10 @@ export function NotificationDropdown() {
               <div
                 key={n.id}
                 className={cn(
-                  'flex items-start gap-3 px-4 py-3 transition-colors border-b border-slate-50 last:border-0',
-                  !n.is_read ? 'bg-blue-50/60 hover:bg-blue-50' : 'hover:bg-slate-50'
+                  'flex items-start gap-3 px-4 py-3 transition-colors border-b border-border/60 last:border-0',
+                  !n.is_read
+                    ? 'bg-primary/[0.06] hover:bg-primary/[0.09]'
+                    : 'hover:bg-muted/50'
                 )}
               >
                 {!n.is_read && (

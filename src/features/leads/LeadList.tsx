@@ -46,7 +46,7 @@ export function LeadList() {
   return (
     <>
       <div className="space-y-4">
-        <div className="flex gap-3 flex-wrap items-center">
+        <div className="surface-elevated rounded-xl p-3 flex gap-3 flex-wrap items-center">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -83,7 +83,7 @@ export function LeadList() {
         ) : leads.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground">Лиды не найдены</p>
         ) : (
-          <div className="border rounded-lg overflow-hidden">
+          <div className="surface-elevated rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -112,7 +112,9 @@ export function LeadList() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${stageMeta.bgColor} ${stageMeta.color}`}>
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full border ${stageMeta.pillBgBorder} ${stageMeta.accentText}`}
+                        >
                           {stageMeta.label}
                         </span>
                       </TableCell>

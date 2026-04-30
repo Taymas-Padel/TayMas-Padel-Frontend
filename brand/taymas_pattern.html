@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TAYMAS · Pattern Studio v0.4</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{
+    --bg:#F5FFE6;
+    --ink:#033431;
+    --line:rgba(3,52,49,.14);
+    --muted:#557570;
+    --accent:#00CA74;
+    --paper:#FAFFF0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family: "Helvetica Neue","Inter",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;
+    transition: background .25s ease, color .25s ease;
+  }
+
+  header{
+    display:flex;align-items:baseline;justify-content:space-between;
+    padding:16px 26px;border-bottom:1px solid var(--line);
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  }
+  header .brand b{font-weight:700;letter-spacing:.22em}
+  header .meta{color:var(--muted)}
+  header .meta span{margin-left:18px}
+
+  main{
+    display:grid;
+    grid-template-columns: 320px 1fr;
+    flex:1;min-height:0;
+  }
+  .panel{
+    border-right:1px solid var(--line);
+    padding:22px 22px 28px;
+    overflow:auto;
+  }
+  .stage{
+    padding:24px 28px 28px;
+    display:flex;flex-direction:column;gap:14px;
+    overflow:auto;
+  }
+
+  .group{margin-bottom:20px}
+  .group h4{
+    margin:0 0 10px;
+    font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--muted);font-weight:600;
+  }
+
+  .modes{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+  .mode-btn{
+    appearance:none;border:1px solid var(--line);background:transparent;
+    color:var(--ink);padding:9px 10px;text-align:left;cursor:pointer;
+    transition:all .15s ease;font-family:inherit;
+  }
+  .mode-btn b{display:block;font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;}
+  .mode-btn span{display:block;color:var(--muted);font-size:10px;margin-top:3px;line-height:1.3;}
+  .mode-btn:hover{border-color:var(--ink)}
+  .mode-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .mode-btn.active span{color:rgba(250,255,240,.65)}
+
+  .palettes{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+  .pal-btn{
+    border:1px solid var(--line);padding:9px 10px;cursor:pointer;
+    display:flex;align-items:center;gap:8px;background:transparent;
+    font-family:inherit;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);
+  }
+  .pal-btn:hover{border-color:var(--ink)}
+  .pal-btn.active{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+  .pal-swatch{display:flex;width:32px;height:14px;flex-shrink:0;border:1px solid rgba(0,0,0,.06)}
+  .pal-swatch i{flex:1;display:block}
+
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 4px}
+  .row label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .row .val{font-variant-numeric:tabular-nums;font-size:11px;color:var(--ink);font-weight:600}
+  .row.dim label, .row.dim .val{opacity:0.35}
+
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;background:transparent;height:18px;
+  }
+  input[type=range]:disabled{opacity:0.35}
+  input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--ink)}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:10px;height:10px;border-radius:50%;
+    background:var(--ink);margin-top:-5px;cursor:pointer;
+  }
+  input[type=range]::-moz-range-track{height:1px;background:var(--ink)}
+  input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--ink);border:0;cursor:pointer}
+
+  .toggle{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 0;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    border-top:1px solid var(--line);
+  }
+  .toggle:first-of-type{border-top:0}
+  .toggle.dim{opacity:0.4}
+  .toggle input{accent-color:var(--ink)}
+
+  .actions{display:flex;flex-direction:column;gap:7px;margin-top:14px}
+  .btn{
+    appearance:none;border:1px solid var(--ink);background:var(--ink);color:var(--paper);
+    padding:11px 14px;cursor:pointer;
+    font-family:inherit;font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;
+    transition:all .15s;
+  }
+  .btn:hover{background:transparent;color:var(--ink)}
+  .btn.ghost{background:transparent;color:var(--ink)}
+  .btn.ghost:hover{background:var(--ink);color:var(--paper)}
+
+  .canvas-wrap{
+    background:var(--paper);
+    border:1px solid var(--line);
+    aspect-ratio:1/1;
+    width:100%;
+    max-width:760px;
+    margin:0 auto;
+    position:relative;
+    overflow:hidden;
+  }
+  .canvas-wrap svg{display:block;width:100%;height:100%}
+  .stage-meta{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+    max-width:760px;width:100%;margin:0 auto;
+  }
+  .stage-meta b{color:var(--ink);font-weight:700;letter-spacing:.18em}
+
+  .mocks{
+    display:grid;grid-template-columns:0.7fr 1fr 1.2fr;gap:14px;
+    max-width:760px;margin:6px auto 0;
+  }
+  .mock{
+    border:1px solid var(--line);background:var(--paper);
+    position:relative;overflow:hidden;
+  }
+  .mock-tall{aspect-ratio:9/16}
+  .mock-square{aspect-ratio:1/1}
+  .mock-wide{aspect-ratio:3/2}
+  .mock svg{width:100%;height:100%;display:block}
+  .mock .label{
+    position:absolute;left:10px;bottom:8px;
+    font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);
+    mix-blend-mode:difference;font-weight:600;
+  }
+  .mock .wm{
+    position:absolute;left:12px;top:12px;right:12px;
+    font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--paper);mix-blend-mode:difference;
+    display:flex;justify-content:space-between;font-weight:600;
+  }
+  .mock .wm b{font-weight:800}
+
+  footer{
+    padding:12px 26px;border-top:1px solid var(--line);
+    font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+    display:flex;justify-content:space-between;
+  }
+  @media (max-width: 880px){
+    main{grid-template-columns:1fr}
+    .panel{border-right:0;border-bottom:1px solid var(--line)}
+    .mocks{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><b>TAYMAS</b> · Pattern Studio</div>
+  <div class="meta">
+    <span>v0.4</span>
+    <span id="seedLabel">seed —</span>
+  </div>
+</header>
+
+<main>
+  <aside class="panel">
+
+    <div class="group">
+      <h4>01 · Mode</h4>
+      <div class="modes" id="modes">
+        <button class="mode-btn active" data-mode="smash"><b>Smash</b><span>Из центра наружу</span></button>
+        <button class="mode-btn" data-mode="implode"><b>Implode</b><span>Снаружи к центру</span></button>
+        <button class="mode-btn" data-mode="drill"><b>Drill</b><span>Ритмичная сетка ударов</span></button>
+        <button class="mode-btn" data-mode="glyphs"><b>Glyphs</b><span>Линии, дуги, точки</span></button>
+        <button class="mode-btn" data-mode="field"><b>Field</b><span>Точки с диагоналями</span></button>
+        <button class="mode-btn" data-mode="cluster"><b>Cluster</b><span>Зоны контакта</span></button>
+      </div>
+    </div>
+
+    <div class="group">
+      <h4>02 · Palette</h4>
+      <div class="palettes" id="palettes">
+        <button class="pal-btn active" data-palette="light">
+          <span class="pal-swatch"><i style="background:#F5FFE6"></i><i style="background:#033431"></i><i style="background:#00CA74"></i></span>
+          Light
+        </button>
+        <button class="pal-btn" data-palette="bright">
+          <span class="pal-swatch"><i style="background:#F5FFE6"></i><i style="background:#00CA74"></i><i style="background:#033431"></i></span>
+          Bright
+        </button>
+        <button class="pal-btn" data-palette="deep">
+          <span class="pal-swatch"><i style="background:#033431"></i><i style="background:#00CA74"></i><i style="background:#F5FFE6"></i></span>
+          Deep
+        </button>
+        <button class="pal-btn" data-palette="sand">
+          <span class="pal-swatch"><i style="background:#F5FFE6"></i><i style="background:#033431"></i><i style="background:#C9B589"></i></span>
+          Sand
+        </button>
+        <button class="pal-btn" data-palette="lime">
+          <span class="pal-swatch"><i style="background:#F5FFE6"></i><i style="background:#033431"></i><i style="background:#8CC63E"></i></span>
+          Lime
+        </button>
+        <button class="pal-btn" data-palette="mix">
+          <span class="pal-swatch"><i style="background:#033431"></i><i style="background:#00CA74"></i><i style="background:#8CC63E"></i><i style="background:#C9B589"></i></span>
+          Mix
+        </button>
+      </div>
+    </div>
+
+    <div class="group">
+      <h4>03 · Parameters</h4>
+
+      <div class="row"><label>Density</label><span class="val" id="vDensity">22</span></div>
+      <input type="range" id="density" min="6" max="80" value="22">
+
+      <div class="row"><label>Motion length</label><span class="val" id="vMotion">70</span></div>
+      <input type="range" id="motion" min="0" max="200" value="70">
+
+      <div class="row"><label>Motion variance</label><span class="val" id="vMotionVar">50</span></div>
+      <input type="range" id="motionVar" min="0" max="100" value="50">
+
+      <div class="row"><label>Ball size</label><span class="val" id="vSize">14</span></div>
+      <input type="range" id="size" min="3" max="40" value="14">
+
+      <div class="row"><label>Scatter</label><span class="val" id="vScatter">45</span></div>
+      <input type="range" id="scatter" min="0" max="100" value="45">
+
+      <div class="row"><label>Energy</label><span class="val" id="vEnergy">55</span></div>
+      <input type="range" id="energy" min="0" max="100" value="55">
+
+      <div class="row" id="rowInner"><label>Inner zone</label><span class="val" id="vInner">10</span></div>
+      <input type="range" id="inner" min="0" max="80" value="10">
+    </div>
+
+    <div class="group">
+      <h4>04 · Options</h4>
+      <label class="toggle"><span>Court grid</span><input type="checkbox" id="optGrid"></label>
+      <label class="toggle" id="rowDots"><span>Background dots</span><input type="checkbox" id="optDots"></label>
+      <label class="toggle"><span>Solid (no motion)</span><input type="checkbox" id="optSolid"></label>
+      <label class="toggle"><span>Two-tone (ball ≠ trail)</span><input type="checkbox" id="optTwoTone"></label>
+      <label class="toggle"><span>Boost accents</span><input type="checkbox" id="optAccent"></label>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="randomize">↻ Randomize</button>
+      <button class="btn ghost" id="exportSVG">Export · SVG</button>
+      <button class="btn ghost" id="exportPNG">Export · PNG (2048)</button>
+    </div>
+
+    <div style="margin-top:18px;font-size:10px;line-height:1.55;color:var(--muted);letter-spacing:.04em">
+      В режиме Glyphs каждый удар случайно становится точкой, линией или дугой. Motion-хвост идёт вдоль направления формы. Background dots — фоновая сетка для Drill / Glyphs.
+    </div>
+  </aside>
+
+  <section class="stage">
+    <div class="stage-meta">
+      <div><b id="modeLabel">Smash</b> · <span id="paletteLabel">Light</span></div>
+      <div id="dimLabel">2000 × 2000</div>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap"></div>
+
+    <div class="stage-meta" style="margin-top:6px">
+      <div>Применения · превью</div>
+      <div>Story · Square · Banner</div>
+    </div>
+    <div class="mocks">
+      <div class="mock mock-tall" id="mockStory">
+        <div class="wm"><b>TAYMAS</b><span>9 / 16</span></div>
+        <div class="label">Story</div>
+      </div>
+      <div class="mock mock-square" id="mockSquare">
+        <div class="wm"><b>TAYMAS</b><span>1 / 1</span></div>
+        <div class="label">Post</div>
+      </div>
+      <div class="mock mock-wide" id="mockBanner">
+        <div class="wm"><b>TAYMAS</b><span>3 / 2</span></div>
+        <div class="label">Banner</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div>© Grand Padel Taymas · Visual Identity</div>
+  <div>Pattern engine</div>
+</footer>
+
+<script>
+/* =========================================================
+ *  TAYMAS · PATTERN GENERATOR · v0.4
+ * ========================================================= */
+
+const W = 2000, H = 2000;
+const wrap = document.getElementById('canvasWrap');
+
+const PALETTES = {
+  light:  { bg:'#F5FFE6', ball:'#033431', accent:'#00CA74' },
+  bright: { bg:'#F5FFE6', ball:'#00CA74', accent:'#033431' },
+  deep:   { bg:'#033431', ball:'#00CA74', accent:'#8CC63E' },
+  sand:   { bg:'#F5FFE6', ball:'#033431', accent:'#C9B589' },
+  lime:   { bg:'#F5FFE6', ball:'#033431', accent:'#8CC63E' },
+  mix:    { bg:'#F5FFE6', ball:'#033431', accent:'#00CA74',
+            isMix:true, mixColors:['#033431','#00CA74','#8CC63E','#C9B589'] },
+};
+
+const STATE = {
+  mode: 'smash',
+  palette: 'light',
+  density: 22,
+  motion: 70,
+  motionVar: 50,
+  size: 14,
+  scatter: 45,
+  energy: 55,
+  inner: 10,
+  showGrid: false,
+  showDots: false,
+  solid: false,
+  twoTone: false,
+  boostAccent: false,
+  seed: Math.floor(Math.random()*1e9),
+};
+
+function rng(seed){
+  let s = seed >>> 0;
+  return function(){
+    s |= 0; s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function motionLen(state, r){
+  const base = state.motion * 5;
+  const v = state.motionVar / 100;
+  return base * (1 - v*0.7 + r() * (v*1.6));
+}
+
+function ballSize(state, r, factor=1){
+  const base = state.size * 4 * factor;
+  const sc = state.scatter / 100;
+  return base * (0.55 + r() * (0.55 + sc*0.8));
+}
+
+/* =========================================================
+ *  ГЕНЕРАТОРЫ
+ * ========================================================= */
+
+function genSmash(state, r){
+  const out = [];
+  const cx = W/2, cy = H/2;
+  const N = state.density;
+  const energy = state.energy / 100;
+  const scatter = state.scatter / 100;
+  const inner = (state.inner/100) * W * 0.40;
+
+  for(let i=0; i<N; i++){
+    const angle = (i/N)*Math.PI*2 + (r()-0.5) * scatter * 0.6;
+    const reach = (W*0.50 - inner);
+    const dist = inner + (W*0.05) + r() * reach * (0.30 + energy*0.70);
+    const x2 = cx + Math.cos(angle)*dist;
+    const y2 = cy + Math.sin(angle)*dist;
+    const tl = motionLen(state, r);
+    const startDist = Math.max(inner, dist - tl);
+    const x1 = cx + Math.cos(angle)*startDist;
+    const y1 = cy + Math.sin(angle)*startDist;
+    const sz = ballSize(state, r);
+    const curve = (r()-0.5) * scatter * 0.6;
+    const accent = r() < (state.boostAccent ? 0.40 : 0.18);
+    out.push({glyphType:'circle', x1,y1,x2,y2, r:sz, accent, curve});
+  }
+  return out;
+}
+
+function genImplode(state, r){
+  const out = [];
+  const cx = W/2, cy = H/2;
+  const N = state.density;
+  const energy = state.energy / 100;
+  const scatter = state.scatter / 100;
+  const inner = (state.inner/100) * W * 0.40;
+
+  for(let i=0; i<N; i++){
+    const angle = (i/N)*Math.PI*2 + (r()-0.5) * scatter * 0.6;
+    const reach = (W*0.50 - inner);
+    const startDist = inner + (W*0.10) + r() * reach * (0.40 + energy*0.60);
+    const x1 = cx + Math.cos(angle)*startDist;
+    const y1 = cy + Math.sin(angle)*startDist;
+    const tl = motionLen(state, r);
+    const endDist = Math.max(inner, startDist - tl);
+    const x2 = cx + Math.cos(angle)*endDist;
+    const y2 = cy + Math.sin(angle)*endDist;
+    const sz = ballSize(state, r);
+    const curve = (r()-0.5) * scatter * 0.6;
+    const accent = r() < (state.boostAccent ? 0.40 : 0.18);
+    out.push({glyphType:'circle', x1,y1,x2,y2, r:sz, accent, curve});
+  }
+  return out;
+}
+
+function genDrill(state, r){
+  const out = [];
+  const cols = Math.max(4, Math.min(28, Math.round(state.density * 0.6)));
+  const rows = cols;
+  const padX = W*0.06, padY = H*0.06;
+  const scatter = state.scatter / 100;
+  const energy = state.energy / 100;
+
+  // underlay сетки точек
+  if(state.showDots){
+    out.underlay = [];
+    for(let cy=0; cy<rows; cy++){
+      for(let cxx=0; cxx<cols; cxx++){
+        const x = padX + (W-padX*2)*(cxx/(cols-1));
+        const y = padY + (H-padY*2)*(cy/(rows-1));
+        out.underlay.push({x, y});
+      }
+    }
+  }
+
+  for(let cy=0; cy<rows; cy++){
+    for(let cxx=0; cxx<cols; cxx++){
+      const x = padX + (W-padX*2)*(cxx/(cols-1));
+      const y = padY + (H-padY*2)*(cy/(rows-1));
+      const ox = (r()-0.5) * scatter * 35;
+      const oy = (r()-0.5) * scatter * 35;
+      const dirAng = r() * Math.PI*2;
+      const tl = motionLen(state, r) * 0.5 * (0.4 + energy*0.6);
+      const x2 = x+ox, y2 = y+oy;
+      const x1 = x2 - Math.cos(dirAng)*tl;
+      const y1 = y2 - Math.sin(dirAng)*tl;
+      const sz = ballSize(state, r);
+      const curve = (r()-0.5) * scatter * 0.4;
+      const accent = (cxx*7+cy*11) % 13 === 0 || (state.boostAccent && r() < 0.30);
+      out.push({glyphType:'circle', x1,y1,x2,y2, r:sz, accent, curve});
+    }
+  }
+  return out;
+}
+
+/* GLYPHS — на каждой ячейке: круг / линия / дуга, с motion */
+function genGlyphs(state, r){
+  const out = [];
+  const cols = Math.max(8, Math.min(32, Math.round(state.density * 0.9)));
+  const rows = cols;
+  const padX = W*0.05, padY = H*0.05;
+  const cellW = (W-padX*2)/cols;
+  const cellH = (H-padY*2)/rows;
+  const cellSize = Math.min(cellW, cellH);
+  const scatter = state.scatter / 100;
+  const energy = state.energy / 100;
+  const fillRate = 0.18 + energy * 0.32;  // 18-50%
+
+  // dotted underlay
+  if(state.showDots){
+    out.underlay = [];
+    for(let cy=0; cy<rows; cy++){
+      for(let cxx=0; cxx<cols; cxx++){
+        const x = padX + cellW*(cxx + 0.5);
+        const y = padY + cellH*(cy + 0.5);
+        out.underlay.push({x, y});
+      }
+    }
+  }
+
+  for(let cy=0; cy<rows; cy++){
+    for(let cxx=0; cxx<cols; cxx++){
+      if(r() > fillRate) continue;
+      const x = padX + cellW*(cxx + 0.5);
+      const y = padY + cellH*(cy + 0.5);
+
+      // ограничиваем размеры элементов размером ячейки
+      const tl = Math.min(motionLen(state, r) * 0.5, cellSize * 5);
+      const sz = Math.min(ballSize(state, r, 0.42), cellSize * 0.18);
+      const accent = r() < (state.boostAccent ? 0.40 : 0.20);
+      const typeRoll = r();
+
+      if(typeRoll < 0.25){
+        /* CIRCLE — обычный мяч с motion */
+        const ang = r() * Math.PI*2;
+        out.push({
+          glyphType:'circle',
+          x1: x - Math.cos(ang)*tl,
+          y1: y - Math.sin(ang)*tl,
+          x2: x, y2: y,
+          r: sz,
+          accent,
+          curve: (r()-0.5)*scatter*0.3,
+        });
+      }
+      else if(typeRoll < 0.70){
+        /* LINE — solid отрезок + motion-хвост на той же прямой
+           orientation: 0=horizontal, 1=vertical, 2=diag /, 3=diag \ */
+        const orientations = [0, Math.PI/2, Math.PI/4, -Math.PI/4];
+        const baseAng = orientations[Math.floor(r()*4)];
+        // случайно: либо в прямом направлении, либо в обратном
+        const ang = baseAng + (r() < 0.5 ? 0 : Math.PI);
+        const lineLen = Math.min(
+          sz * (3.5 + r()*4 + scatter*4),
+          cellSize * (1.0 + scatter*1.5)
+        );
+        const dx = Math.cos(ang), dy = Math.sin(ang);
+        out.push({
+          glyphType:'line',
+          // motion: хвост идёт ПЕРЕД линией, на той же прямой
+          x1: x - dx*tl,  y1: y - dy*tl,
+          x2: x,          y2: y,             // конец motion = начало линии
+          // линия: продолжается от (x,y) на lineLen в направлении (dx,dy)
+          lineEndX: x + dx*lineLen,
+          lineEndY: y + dy*lineLen,
+          r: sz * 0.85,
+          accent,
+        });
+      }
+      else {
+        /* ARC — четверть круга + motion-хвост касательно к началу
+           anchor (точка на сетке) = arcStart */
+        const startAngles = [0, Math.PI/2, Math.PI, 3*Math.PI/2];
+        const θ1 = startAngles[Math.floor(r()*4)];
+        const θ2 = θ1 + Math.PI/2;
+        const arcR = Math.min(
+          sz * (2.2 + r()*1.8 + scatter*2),
+          cellSize * (0.55 + scatter*0.8)
+        );
+        // arcCenter находится в (-cos(θ1), -sin(θ1))*arcR от anchor
+        const acx = x - Math.cos(θ1) * arcR;
+        const acy = y - Math.sin(θ1) * arcR;
+        // arc end point
+        const arcEndX = acx + Math.cos(θ2) * arcR;
+        const arcEndY = acy + Math.sin(θ2) * arcR;
+        // касательная в anchor для CCW движения вдоль дуги (math CCW = SVG CW визуально)
+        const tanX = -Math.sin(θ1);
+        const tanY =  Math.cos(θ1);
+        // motion заходит в anchor с касательным направлением
+        // motion_end = anchor (x,y), motion_start = anchor - tan*tl
+        out.push({
+          glyphType:'arc',
+          x1: x - tanX*tl,  y1: y - tanY*tl,
+          x2: x,            y2: y,
+          arcR: arcR,
+          arcEndX, arcEndY,
+          arcSweep: 1,  // SVG CW (соответствует math CCW из-за инверсии Y)
+          r: sz * 0.85,
+          accent,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+function genField(state, r){
+  const out = [];
+  const cols = Math.max(4, Math.min(18, Math.round(state.density * 0.32)));
+  const rows = cols;
+  const padX = W*0.04, padY = H*0.04;
+  const cellW = (W-padX*2)/(cols-1);
+  const cellH = (H-padY*2)/(rows-1);
+  const scatter = state.scatter / 100;
+  const energy = state.energy / 100;
+  const baseAngles = [Math.PI*0.25, Math.PI*0.75, Math.PI*1.25, Math.PI*1.75];
+
+  for(let cy=0; cy<rows; cy++){
+    for(let cxx=0; cxx<cols; cxx++){
+      const x = padX + cellW*cxx;
+      const y = padY + cellH*cy;
+      const ox = (r()-0.5) * scatter * cellW * 0.35;
+      const oy = (r()-0.5) * scatter * cellH * 0.35;
+      const baseAng = baseAngles[Math.floor(r()*4)];
+      const ang = baseAng + (r()-0.5) * (0.4 + scatter*0.7);
+      const tl = motionLen(state, r) * (0.6 + energy*0.5);
+      const sz = ballSize(state, r, 1.7);
+      const x2 = x+ox, y2 = y+oy;
+      const x1 = x2 - Math.cos(ang)*tl;
+      const y1 = y2 - Math.sin(ang)*tl;
+      const accent = r() < (state.boostAccent ? 0.35 : 0.10);
+      const curve = (r()-0.5) * scatter * 0.20;
+      out.push({glyphType:'circle', x1,y1,x2,y2, r:sz, accent, curve});
+    }
+  }
+  return out;
+}
+
+function genCluster(state, r){
+  const out = [];
+  const N = Math.round(state.density * 1.6);
+  const energy = state.energy / 100;
+  const scatter = state.scatter / 100;
+  const clusterCount = 3 + Math.floor(r()*2);
+  const clusters = [];
+  for(let c=0; c<clusterCount; c++){
+    clusters.push({
+      cx: W*0.20 + r()*W*0.60,
+      cy: H*0.20 + r()*H*0.60,
+      rad: W*0.10 + r()*W*0.16,
+      flow: r()*Math.PI*2,
+      weight: 0.6 + r()*0.4
+    });
+  }
+  const totalW = clusters.reduce((s,c)=>s+c.weight, 0);
+
+  for(let i=0; i<N; i++){
+    let pick = r()*totalW, cl;
+    for(const c of clusters){ pick -= c.weight; if(pick<=0){cl=c; break;} }
+    cl = cl || clusters[0];
+    const u = (r()+r()+r())/3;
+    const ang = r() * Math.PI*2;
+    const rad = u * cl.rad * (0.6 + r()*0.6);
+    const x2 = cl.cx + Math.cos(ang)*rad;
+    const y2 = cl.cy + Math.sin(ang)*rad;
+    const m = motionLen(state, r) * 0.5 * (0.4 + energy*0.6);
+    const flowAng = cl.flow + (r()-0.5) * 0.8 * (0.5 + scatter*0.8);
+    const x1 = x2 - Math.cos(flowAng)*m;
+    const y1 = y2 - Math.sin(flowAng)*m;
+    const sz = ballSize(state, r, 0.7);
+    const curve = (r()-0.5) * scatter * 0.5;
+    const accent = r() < (state.boostAccent ? 0.30 : 0.08);
+    out.push({glyphType:'circle', x1,y1,x2,y2, r:sz, accent, curve});
+  }
+  return out;
+}
+
+/* =========================================================
+ *  ВЫБОР ЦВЕТОВ
+ *  Two-tone: ВСЕ мячи одного цвета, ВСЕ хвосты другого. Глобально.
+ * ========================================================= */
+function pickColors(s, palette, state, r){
+  let ballColor, trailColor;
+
+  if(palette.isMix){
+    if(state.twoTone){
+      // детерминированная пара цветов — для всех штрихов одинаково
+      ballColor  = palette.mixColors[0];   // #033431
+      trailColor = palette.mixColors[1];   // #00CA74
+    } else {
+      const c = palette.mixColors[Math.floor(r() * palette.mixColors.length)];
+      ballColor = c;
+      trailColor = c;
+    }
+  } else {
+    if(state.twoTone){
+      // глобально: ВСЕ мячи palette.ball, ВСЕ хвосты palette.accent
+      ballColor  = palette.ball;
+      trailColor = palette.accent;
+      // accent flag игнорируется
+    } else {
+      ballColor  = s.accent ? palette.accent : palette.ball;
+      trailColor = ballColor;
+    }
+  }
+  return { ballColor, trailColor };
+}
+
+/* =========================================================
+ *  RENDER STROKE — motion (gradient) + final shape (solid)
+ * ========================================================= */
+function renderStroke(s, palette, state, idx, r){
+  const { ballColor, trailColor } = pickColors(s, palette, state, r);
+  const type = s.glyphType || 'circle';
+  const sw = (s.r * 2).toFixed(1);
+
+  /* финальная форма (solid) */
+  let finalShape = '';
+  if(type === 'circle'){
+    finalShape = `<circle cx="${s.x2.toFixed(1)}" cy="${s.y2.toFixed(1)}" r="${s.r.toFixed(1)}" fill="${ballColor}"/>`;
+  } else if(type === 'line'){
+    finalShape = `<line x1="${s.x2.toFixed(1)}" y1="${s.y2.toFixed(1)}" x2="${s.lineEndX.toFixed(1)}" y2="${s.lineEndY.toFixed(1)}" stroke="${ballColor}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  } else if(type === 'arc'){
+    finalShape = `<path d="M ${s.x2.toFixed(1)} ${s.y2.toFixed(1)} A ${s.arcR.toFixed(1)} ${s.arcR.toFixed(1)} 0 0 ${s.arcSweep} ${s.arcEndX.toFixed(1)} ${s.arcEndY.toFixed(1)}" stroke="${ballColor}" stroke-width="${sw}" stroke-linecap="round" fill="none"/>`;
+  }
+
+  /* solid mode или короткий путь — без motion */
+  const dx = s.x2 - s.x1;
+  const dy = s.y2 - s.y1;
+  const len = Math.hypot(dx, dy);
+  if(state.solid || len < s.r * 0.6){
+    return { defs: '', body: finalShape };
+  }
+
+  /* motion-хвост (gradient) */
+  const gid = `g${idx}`;
+  const defs = `<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="${s.x1.toFixed(1)}" y1="${s.y1.toFixed(1)}" x2="${s.x2.toFixed(1)}" y2="${s.y2.toFixed(1)}"><stop offset="0%" stop-color="${trailColor}" stop-opacity="0"/><stop offset="100%" stop-color="${trailColor}" stop-opacity="1"/></linearGradient>`;
+
+  let motionPath;
+  if(Math.abs(s.curve || 0) < 0.05){
+    motionPath = `<line x1="${s.x1.toFixed(1)}" y1="${s.y1.toFixed(1)}" x2="${s.x2.toFixed(1)}" y2="${s.y2.toFixed(1)}" stroke="url(#${gid})" stroke-width="${sw}" stroke-linecap="round"/>`;
+  } else {
+    const px = -dy/len, py = dx/len;
+    const bend = s.curve * len * 0.25;
+    const cx = ((s.x1+s.x2)/2 + px*bend).toFixed(1);
+    const cy = ((s.y1+s.y2)/2 + py*bend).toFixed(1);
+    motionPath = `<path d="M ${s.x1.toFixed(1)} ${s.y1.toFixed(1)} Q ${cx} ${cy} ${s.x2.toFixed(1)} ${s.y2.toFixed(1)}" stroke="url(#${gid})" stroke-width="${sw}" stroke-linecap="round" fill="none"/>`;
+  }
+
+  return { defs, body: motionPath + finalShape };
+}
+
+/* =========================================================
+ *  MAIN
+ * ========================================================= */
+function generateStrokes(state){
+  const r = rng(state.seed);
+  switch(state.mode){
+    case 'smash':   return genSmash(state, r);
+    case 'implode': return genImplode(state, r);
+    case 'drill':   return genDrill(state, r);
+    case 'glyphs':  return genGlyphs(state, r);
+    case 'field':   return genField(state, r);
+    case 'cluster': return genCluster(state, r);
+    default:        return [];
+  }
+}
+
+function buildSVG(state){
+  const palette = PALETTES[state.palette];
+  const r = rng(state.seed ^ 0x5A5A5A5A);
+
+  let allDefs = '';
+  let allBody = '';
+
+  if(state.showGrid){
+    allBody += `<g stroke="${palette.ball}" stroke-opacity="0.10" stroke-width="2" fill="none"><rect x="${W*0.06}" y="${H*0.10}" width="${W*0.88}" height="${H*0.80}"/><line x1="${W*0.06}" y1="${H*0.50}" x2="${W*0.94}" y2="${H*0.50}"/><line x1="${W*0.50}" y1="${H*0.10}" x2="${W*0.50}" y2="${H*0.90}"/><line x1="${W*0.06}" y1="${H*0.30}" x2="${W*0.94}" y2="${H*0.30}"/><line x1="${W*0.06}" y1="${H*0.70}" x2="${W*0.94}" y2="${H*0.70}"/></g>`;
+  }
+
+  const strokes = generateStrokes(state);
+
+  // dotted underlay для drill / glyphs
+  if(strokes.underlay){
+    let dots = '';
+    strokes.underlay.forEach(p=>{
+      dots += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.5" fill="${palette.ball}" opacity="0.18"/>`;
+    });
+    allBody += dots;
+  }
+
+  strokes.forEach((s, i) => {
+    const piece = renderStroke(s, palette, state, i, r);
+    allDefs += piece.defs;
+    allBody += piece.body;
+  });
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice"><rect width="${W}" height="${H}" fill="${palette.bg}"/><defs>${allDefs}</defs>${allBody}</svg>`;
+}
+
+function renderTo(target){ target.innerHTML = buildSVG(STATE); }
+function renderMockTo(target){
+  const svg = buildSVG(STATE);
+  const oldSvg = target.querySelector('svg');
+  if(oldSvg) oldSvg.remove();
+  target.insertAdjacentHTML('afterbegin', svg);
+}
+
+/* =========================================================
+ *  UI
+ * ========================================================= */
+const $ = id => document.getElementById(id);
+
+function applyTheme(){
+  const pal = PALETTES[STATE.palette];
+  document.documentElement.style.setProperty('--bg', pal.bg);
+  if(STATE.palette === 'deep'){
+    document.documentElement.style.setProperty('--ink', '#F5FFE6');
+    document.documentElement.style.setProperty('--paper', pal.bg);
+    document.documentElement.style.setProperty('--muted', '#8FAFA9');
+    document.documentElement.style.setProperty('--line', 'rgba(245,255,230,.18)');
+  } else {
+    document.documentElement.style.setProperty('--ink', '#033431');
+    document.documentElement.style.setProperty('--paper', '#FAFFF0');
+    document.documentElement.style.setProperty('--muted', '#557570');
+    document.documentElement.style.setProperty('--line', 'rgba(3,52,49,.14)');
+  }
+}
+
+function updateContextualUI(){
+  const innerVisible = STATE.mode === 'smash' || STATE.mode === 'implode';
+  $('inner').disabled = !innerVisible;
+  $('rowInner').classList.toggle('dim', !innerVisible);
+
+  const dotsVisible = STATE.mode === 'drill' || STATE.mode === 'glyphs';
+  $('optDots').disabled = !dotsVisible;
+  $('rowDots').classList.toggle('dim', !dotsVisible);
+}
+
+function update(){
+  $('vDensity').textContent   = STATE.density;
+  $('vMotion').textContent    = STATE.motion;
+  $('vMotionVar').textContent = STATE.motionVar;
+  $('vSize').textContent      = STATE.size;
+  $('vScatter').textContent   = STATE.scatter;
+  $('vEnergy').textContent    = STATE.energy;
+  $('vInner').textContent     = STATE.inner;
+  $('seedLabel').textContent  = `seed ${STATE.seed.toString(36).toUpperCase()}`;
+  $('modeLabel').textContent  = STATE.mode.charAt(0).toUpperCase()+STATE.mode.slice(1);
+  $('paletteLabel').textContent = STATE.palette.charAt(0).toUpperCase()+STATE.palette.slice(1);
+
+  applyTheme();
+  updateContextualUI();
+  renderTo(wrap);
+  renderMockTo($('mockStory'));
+  renderMockTo($('mockSquare'));
+  renderMockTo($('mockBanner'));
+}
+
+document.querySelectorAll('#modes .mode-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#modes .mode-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    STATE.mode = b.dataset.mode;
+    update();
+  });
+});
+
+document.querySelectorAll('#palettes .pal-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#palettes .pal-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    STATE.palette = b.dataset.palette;
+    update();
+  });
+});
+
+$('density').addEventListener('input',   e=>{ STATE.density   = +e.target.value; update();});
+$('motion').addEventListener('input',    e=>{ STATE.motion    = +e.target.value; update();});
+$('motionVar').addEventListener('input', e=>{ STATE.motionVar = +e.target.value; update();});
+$('size').addEventListener('input',      e=>{ STATE.size      = +e.target.value; update();});
+$('scatter').addEventListener('input',   e=>{ STATE.scatter   = +e.target.value; update();});
+$('energy').addEventListener('input',    e=>{ STATE.energy    = +e.target.value; update();});
+$('inner').addEventListener('input',     e=>{ STATE.inner     = +e.target.value; update();});
+
+$('optGrid').addEventListener('change',    e=>{ STATE.showGrid    = e.target.checked; update();});
+$('optDots').addEventListener('change',    e=>{ STATE.showDots    = e.target.checked; update();});
+$('optSolid').addEventListener('change',   e=>{ STATE.solid       = e.target.checked; update();});
+$('optTwoTone').addEventListener('change', e=>{ STATE.twoTone     = e.target.checked; update();});
+$('optAccent').addEventListener('change',  e=>{ STATE.boostAccent = e.target.checked; update();});
+
+$('randomize').addEventListener('click', ()=>{
+  STATE.seed = Math.floor(Math.random()*1e9);
+  update();
+});
+
+$('exportSVG').addEventListener('click', ()=>{
+  const svg = buildSVG(STATE);
+  const blob = new Blob([svg], {type:'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `taymas_${STATE.mode}_${STATE.palette}_${STATE.seed.toString(36)}.svg`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+$('exportPNG').addEventListener('click', ()=>{
+  const svg = buildSVG(STATE);
+  const img = new Image();
+  const blob = new Blob([svg], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  img.onload = ()=>{
+    const SIZE = 2048;
+    const c = document.createElement('canvas');
+    c.width = SIZE; c.height = SIZE;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img,0,0,SIZE,SIZE);
+    c.toBlob(b=>{
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = `taymas_${STATE.mode}_${STATE.palette}_${STATE.seed.toString(36)}.png`;
+      a.click();
+    });
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+});
+
+update();
+</script>
+</body>
+</html>

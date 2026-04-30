@@ -29,7 +29,10 @@ import { formatMoney } from '@/utils/format'
 import { parseApiError } from '@/utils/error'
 import { cn } from '@/utils/cn'
 import { ROUTES } from '@/constants/routes'
-import { TOURNAMENT_STATUS_LABELS, TOURNAMENT_STATUS_COLORS } from './TournamentsPage'
+import {
+  TOURNAMENT_STATUS_LABELS,
+  TOURNAMENT_STATUS_BADGE_VARIANTS,
+} from './TournamentsPage'
 import type {
   TournamentStatus, TournamentTeam, TournamentMatch, TeamStatus,
 } from '@/types/tournament'
@@ -43,12 +46,12 @@ const TEAM_STATUS_LABELS: Record<TeamStatus, string> = {
   REFUNDED: 'Возврат',
 }
 
-const TEAM_STATUS_COLORS: Record<TeamStatus, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  CONFIRMED: 'bg-blue-100 text-blue-800 border-blue-200',
-  PAID: 'bg-green-100 text-green-800 border-green-200',
-  WITHDRAWN: 'bg-slate-100 text-slate-600 border-slate-200',
-  REFUNDED: 'bg-red-100 text-red-700 border-red-200',
+const TEAM_STATUS_VARIANTS: Record<TeamStatus, 'warning' | 'info' | 'success' | 'secondary' | 'destructive'> = {
+  PENDING: 'warning',
+  CONFIRMED: 'info',
+  PAID: 'success',
+  WITHDRAWN: 'secondary',
+  REFUNDED: 'destructive',
 }
 
 const STATUS_TRANSITIONS: Record<TournamentStatus, TournamentStatus | null> = {
@@ -247,7 +250,7 @@ function TeamsTab({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn('text-xs', TEAM_STATUS_COLORS[team.status])}>
+                    <Badge variant={TEAM_STATUS_VARIANTS[team.status]} className="text-xs">
                       {TEAM_STATUS_LABELS[team.status]}
                     </Badge>
                   </TableCell>
@@ -352,7 +355,7 @@ function TeamsTab({
 function BracketTab({ tournamentId, isAdmin }: { tournamentId: number; isAdmin: boolean }) {
   const qc = useQueryClient()
 
-  const { data: bracket, isLoading } = useQuery({
+  const { data: bracket, isLoading, isError, error } = useQuery({
     queryKey: ['tournament-bracket', tournamentId],
     queryFn: () => getBracket(tournamentId),
     retry: 1,
@@ -368,6 +371,20 @@ function BracketTab({ tournamentId, isAdmin }: { tournamentId: number; isAdmin: 
   })
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-7 w-7 animate-spin text-muted-foreground" /></div>
+  if (isError) {
+    return (
+      <div className="rounded-lg border border-destructive/25 bg-destructive/5 p-4 space-y-3">
+        <p className="text-sm text-destructive">Не удалось загрузить турнирную сетку: {parseApiError(error)}</p>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => qc.invalidateQueries({ queryKey: ['tournament-bracket', tournamentId] })}
+        >
+          Повторить
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -415,8 +432,8 @@ function BracketMatchCard({ match }: { match: TournamentMatch }) {
 
   return (
     <div className={cn(
-      'border rounded-lg p-3 bg-white text-sm',
-      isCompleted ? 'border-slate-200' : 'border-dashed border-slate-300'
+      'border rounded-lg p-3 bg-card text-sm',
+      isCompleted ? 'border-border' : 'border-dashed border-muted-foreground/25'
     )}>
       <div className="flex items-center justify-between gap-1 mb-1">
         <span className="text-xs text-muted-foreground">Матч #{match.match_number}</span>
@@ -430,9 +447,9 @@ function BracketMatchCard({ match }: { match: TournamentMatch }) {
         isEmpty={!match.team1_info}
       />
       <div className="flex items-center gap-1 my-1">
-        <div className="flex-1 h-px bg-slate-100" />
+        <div className="flex-1 h-px bg-border" />
         <span className="text-xs text-muted-foreground">vs</span>
-        <div className="flex-1 h-px bg-slate-100" />
+        <div className="flex-1 h-px bg-border" />
       </div>
       {/* Team 2 */}
       <TeamRow
@@ -608,12 +625,12 @@ const MATCH_STATUS_LABELS: Record<string, string> = {
   WALKOVER: 'Тех. победа',
 }
 
-const MATCH_STATUS_COLORS: Record<string, string> = {
-  SCHEDULED: 'bg-slate-100 text-slate-600',
-  IN_PROGRESS: 'bg-green-100 text-green-800',
-  COMPLETED: 'bg-blue-100 text-blue-800',
-  POSTPONED: 'bg-yellow-100 text-yellow-800',
-  WALKOVER: 'bg-purple-100 text-purple-800',
+const MATCH_STATUS_VARIANTS: Record<string, 'secondary' | 'success' | 'info' | 'warning' | 'default'> = {
+  SCHEDULED: 'secondary',
+  IN_PROGRESS: 'success',
+  COMPLETED: 'info',
+  POSTPONED: 'warning',
+  WALKOVER: 'default',
 }
 
 function MatchesTab({ tournamentId, canEdit }: { tournamentId: number; canEdit: boolean }) {
@@ -688,7 +705,7 @@ function MatchesTab({ tournamentId, canEdit }: { tournamentId: number; canEdit: 
                           : '—'}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={cn('text-xs', MATCH_STATUS_COLORS[match.status])}>
+                        <Badge variant={MATCH_STATUS_VARIANTS[match.status] ?? 'secondary'} className="text-xs">
                           {MATCH_STATUS_LABELS[match.status] ?? match.status}
                         </Badge>
                       </TableCell>
@@ -743,7 +760,7 @@ function ReportTab({ tournamentId }: { tournamentId: number }) {
           { label: 'Снялись', value: report.withdrawn_teams },
           { label: 'Выручка', value: formatMoney(report.revenue) },
         ].map((s) => (
-          <div key={s.label} className="border rounded-lg p-4 bg-white">
+          <div key={s.label} className="border rounded-lg p-4 bg-card">
             <p className="text-xs text-muted-foreground">{s.label}</p>
             <p className="text-2xl font-bold mt-1">{s.value}</p>
           </div>
@@ -851,10 +868,7 @@ export function TournamentDetailPage() {
           <div>
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold">{tournament.name}</h1>
-              <Badge
-                variant="outline"
-                className={cn('text-sm', TOURNAMENT_STATUS_COLORS[tournament.status])}
-              >
+              <Badge variant={TOURNAMENT_STATUS_BADGE_VARIANTS[tournament.status]} className="text-sm">
                 {TOURNAMENT_STATUS_LABELS[tournament.status]}
               </Badge>
             </div>

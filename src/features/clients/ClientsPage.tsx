@@ -1,23 +1,28 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Search, UserX } from 'lucide-react'
+import { Search, UserX, RotateCcw, UserPlus, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { QrStatusBadge } from '@/components/shared/StatusBadge'
-import { getClients } from '@/api/clients'
+import { getClientDetail, getClients, mobileLogin, searchByPhone, sendMobileCode, userAction } from '@/api/clients'
 import { useDebounce } from '@/hooks/useDebounce'
 import { getInitials } from '@/utils/format'
 import { formatDate } from '@/utils/date'
 import { ROUTES } from '@/constants/routes'
 import { resolveMediaUrl } from '@/utils/media'
+import { parseApiError } from '@/utils/error'
 
 const ROLE_LABELS: Record<string, string> = {
   CLIENT: 'Клиент',
@@ -26,9 +31,22 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export function ClientsPage() {
+  const qc = useQueryClient()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [role, setRole] = useState<string>('CLIENT')
+  const [activeFilter, setActiveFilter] = useState<'_all' | 'active' | 'inactive'>('_all')
+  const [qrFilter, setQrFilter] = useState<'_all' | 'blocked' | 'unblocked'>('_all')
+  const [profileFilter, setProfileFilter] = useState<'_all' | 'complete' | 'incomplete'>('_all')
+  const [isAddOpen, setIsAddOpen] = useState(false)
+  const [phoneInput, setPhoneInput] = useState('')
+  const [normalizedPhone, setNormalizedPhone] = useState('')
+  const [showCodeStep, setShowCodeStep] = useState(false)
+  const [showNameStep, setShowNameStep] = useState(false)
+  const [code, setCode] = useState('')
+  const [newUserId, setNewUserId] = useState<number | null>(null)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const debouncedSearch = useDebounce(search, 400)
 
   const { data: clients = [], isLoading } = useQuery({
@@ -39,15 +57,159 @@ export function ClientsPage() {
     }),
   })
 
+  const filteredClients = useMemo(() => {
+    return clients.filter((client) => {
+      if (activeFilter === 'active' && client.is_active === false) return false
+      if (activeFilter === 'inactive' && client.is_active !== false) return false
+
+      if (qrFilter === 'blocked' && !client.is_qr_blocked) return false
+      if (qrFilter === 'unblocked' && client.is_qr_blocked) return false
+
+      if (profileFilter === 'complete' && !client.is_profile_complete) return false
+      if (profileFilter === 'incomplete' && client.is_profile_complete) return false
+
+      return true
+    })
+  }, [clients, activeFilter, qrFilter, profileFilter])
+
+  const counters = useMemo(() => {
+    return {
+      active: filteredClients.filter((c) => c.is_active !== false).length,
+      inactive: filteredClients.filter((c) => c.is_active === false).length,
+      blockedQr: filteredClients.filter((c) => c.is_qr_blocked).length,
+      incompleteProfiles: filteredClients.filter((c) => !c.is_profile_complete).length,
+    }
+  }, [filteredClients])
+
+  function resetFilters() {
+    setActiveFilter('_all')
+    setQrFilter('_all')
+    setProfileFilter('_all')
+  }
+
+  function resetAddClientFlow() {
+    setPhoneInput('')
+    setNormalizedPhone('')
+    setShowCodeStep(false)
+    setShowNameStep(false)
+    setCode('')
+    setNewUserId(null)
+    setFirstName('')
+    setLastName('')
+  }
+
+  function normalizePhone(value: string): string | null {
+    const digits = value.replace(/\D/g, '')
+    if (digits.length === 11 && digits.startsWith('7')) return `+${digits}`
+    if (digits.length === 10) return `+7${digits}`
+    if (digits.length === 12 && digits.startsWith('77')) return `+${digits.slice(1)}`
+    return null
+  }
+
+  const findByPhoneMutation = useMutation({
+    mutationFn: async (rawPhone: string) => {
+      const phone = normalizePhone(rawPhone)
+      if (!phone) throw new Error('Введите номер в формате +7700...')
+      const existing = await searchByPhone(phone)
+      return { existing, phone }
+    },
+    onSuccess: ({ existing, phone }) => {
+      if (existing.length > 0) {
+        const existingId = existing[0].id
+        toast.success('Клиент уже существует. Открываю карточку.')
+        setIsAddOpen(false)
+        resetAddClientFlow()
+        navigate(ROUTES.CLIENT_DETAIL(existingId))
+        return
+      }
+      setNormalizedPhone(phone)
+      sendCodeMutation.mutate(phone)
+    },
+    onError: (error) => toast.error(parseApiError(error)),
+  })
+
+  const sendCodeMutation = useMutation({
+    mutationFn: (phone: string) => sendMobileCode(phone),
+    onSuccess: () => {
+      setShowCodeStep(true)
+      toast.success('Код отправлен по SMS')
+    },
+    onError: (error: unknown) => {
+      const fallback = parseApiError(error)
+      const message = String(fallback).includes('429')
+        ? 'Слишком много попыток, попробуйте позже'
+        : fallback
+      toast.error(message)
+    },
+  })
+
+  const verifyCodeMutation = useMutation({
+    mutationFn: () =>
+      mobileLogin({
+        phone_number: normalizedPhone,
+        code,
+        device_id: 'crm-reception-web-v1',
+      }),
+    onSuccess: async (data) => {
+      setNewUserId(data.user_id)
+      if (data.is_profile_complete) {
+        toast.success('Клиент добавлен')
+        setIsAddOpen(false)
+        resetAddClientFlow()
+        await qc.invalidateQueries({ queryKey: ['clients'] })
+        navigate(ROUTES.CLIENT_DETAIL(data.user_id))
+        return
+      }
+      setShowNameStep(true)
+      toast.success('Код подтвержден. Заполните имя и фамилию')
+    },
+    onError: (error: unknown) => {
+      const fallback = parseApiError(error)
+      const message = String(fallback).includes('429')
+        ? 'Слишком много попыток, попробуйте позже'
+        : fallback
+      toast.error(message)
+    },
+  })
+
+  const saveProfileMutation = useMutation({
+    mutationFn: async () => {
+      if (!newUserId) throw new Error('Не удалось определить клиента')
+      await userAction(newUserId, 'update_info', {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+      })
+      return getClientDetail(newUserId)
+    },
+    onSuccess: async (client) => {
+      await qc.invalidateQueries({ queryKey: ['clients'] })
+      await qc.invalidateQueries({ queryKey: ['client', client.id] })
+      toast.success('Клиент добавлен')
+      setIsAddOpen(false)
+      resetAddClientFlow()
+      navigate(ROUTES.CLIENT_DETAIL(client.id))
+    },
+    onError: (error) => toast.error(parseApiError(error)),
+  })
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="База клиентов"
-        description={isLoading ? 'Загрузка...' : `${clients.length} записей`}
+        description={isLoading ? 'Загрузка...' : `${filteredClients.length} из ${clients.length} записей`}
+        actions={(
+          <Button
+            type="button"
+            onClick={() => setIsAddOpen(true)}
+          >
+            <UserPlus className="h-4 w-4" />
+            Добавить клиента
+          </Button>
+        )}
       />
 
-      <div className="flex gap-3 items-center">
-        <div className="relative flex-1 max-w-sm">
+      <div className="surface-elevated rounded-xl p-3 flex gap-3 items-center flex-wrap">
+        <div className="relative flex-1 max-w-sm min-w-[240px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Поиск по имени, телефону..."
@@ -67,9 +229,50 @@ export function ClientsPage() {
             <SelectItem value="_all">Все</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={activeFilter} onValueChange={(v) => setActiveFilter(v as typeof activeFilter)}>
+          <SelectTrigger className="w-44 h-10">
+            <SelectValue placeholder="Статус аккаунта" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_all">Все аккаунты</SelectItem>
+            <SelectItem value="active">Только активные</SelectItem>
+            <SelectItem value="inactive">Только деактивированные</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={qrFilter} onValueChange={(v) => setQrFilter(v as typeof qrFilter)}>
+          <SelectTrigger className="w-40 h-10">
+            <SelectValue placeholder="QR статус" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_all">Любой QR</SelectItem>
+            <SelectItem value="unblocked">QR активен</SelectItem>
+            <SelectItem value="blocked">QR заблокирован</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={profileFilter} onValueChange={(v) => setProfileFilter(v as typeof profileFilter)}>
+          <SelectTrigger className="w-44 h-10">
+            <SelectValue placeholder="Профиль" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_all">Любой профиль</SelectItem>
+            <SelectItem value="complete">Профиль заполнен</SelectItem>
+            <SelectItem value="incomplete">Профиль не заполнен</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button type="button" variant="outline" size="sm" className="h-10" onClick={resetFilters}>
+          <RotateCcw className="h-4 w-4" />
+          Сбросить
+        </Button>
       </div>
 
-      <Card>
+      <div className="flex flex-wrap gap-2 text-xs">
+        <Badge variant="secondary">Активные: {counters.active}</Badge>
+        <Badge variant="secondary">Деактивированы: {counters.inactive}</Badge>
+        <Badge variant="secondary">QR заблокирован: {counters.blockedQr}</Badge>
+        <Badge variant="secondary">Незаполненный профиль: {counters.incompleteProfiles}</Badge>
+      </div>
+
+      <Card className="surface-elevated rounded-xl">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 space-y-3">
@@ -77,7 +280,7 @@ export function ClientsPage() {
                 <Skeleton key={i} className="h-14 w-full" />
               ))}
             </div>
-          ) : clients.length === 0 ? (
+          ) : filteredClients.length === 0 ? (
             <EmptyState
               icon={<UserX className="h-10 w-10" />}
               title="Клиенты не найдены"
@@ -97,7 +300,7 @@ export function ClientsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clients.map((client) => (
+                {filteredClients.map((client) => (
                   <TableRow
                     key={client.id}
                     className="cursor-pointer"
@@ -141,6 +344,110 @@ export function ClientsPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={isAddOpen}
+        onOpenChange={(next) => {
+          setIsAddOpen(next)
+          if (!next) resetAddClientFlow()
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Добавить клиента по номеру</DialogTitle>
+            <DialogDescription>
+              Поиск по номеру, SMS-подтверждение и заполнение имени/фамилии.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-client-phone">Номер телефона</Label>
+              <Input
+                id="new-client-phone"
+                placeholder="+77001234567"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value)}
+                disabled={findByPhoneMutation.isPending || sendCodeMutation.isPending || showCodeStep}
+              />
+            </div>
+
+            {!showCodeStep && (
+              <Button
+                type="button"
+                onClick={() => findByPhoneMutation.mutate(phoneInput)}
+                disabled={findByPhoneMutation.isPending || sendCodeMutation.isPending || !phoneInput.trim()}
+              >
+                {(findByPhoneMutation.isPending || sendCodeMutation.isPending) && <Loader2 className="h-4 w-4 animate-spin" />}
+                Найти / отправить код
+              </Button>
+            )}
+
+            {showCodeStep && (
+              <div className="space-y-2">
+                <Label htmlFor="new-client-code">Код из SMS</Label>
+                <Input
+                  id="new-client-code"
+                  placeholder="123456"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                />
+                {!showNameStep && (
+                  <Button
+                    type="button"
+                    onClick={() => verifyCodeMutation.mutate()}
+                    disabled={verifyCodeMutation.isPending || code.length < 4}
+                  >
+                    {verifyCodeMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Подтвердить код
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {showNameStep && (
+              <div className="space-y-3 border rounded-lg p-3">
+                <p className="text-sm font-medium">Заполните данные клиента</p>
+                <div className="space-y-2">
+                  <Label htmlFor="new-client-first-name">Имя</Label>
+                  <Input
+                    id="new-client-first-name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Имя"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-client-last-name">Фамилия</Label>
+                  <Input
+                    id="new-client-last-name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Фамилия"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
+              Отмена
+            </Button>
+            {showNameStep && (
+              <Button
+                type="button"
+                onClick={() => saveProfileMutation.mutate()}
+                disabled={saveProfileMutation.isPending || !firstName.trim() || !lastName.trim()}
+              >
+                {saveProfileMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                Создать клиента
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

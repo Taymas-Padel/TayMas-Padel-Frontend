@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Plus, Loader2, Filter, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -31,12 +31,16 @@ function formatDateInput(date: Date): string {
   return date.toISOString().split('T')[0]
 }
 
-const STATUS_OPTIONS: { value: BookingStatus | 'ALL'; label: string; color: string }[] = [
-  { value: 'ALL', label: 'Все', color: 'bg-muted text-muted-foreground' },
-  { value: 'PENDING', label: 'Ожидает', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
-  { value: 'CONFIRMED', label: 'Подтверждено', color: 'bg-green-100 text-green-800 border-green-300' },
-  { value: 'COMPLETED', label: 'Завершено', color: 'bg-blue-100 text-blue-800 border-blue-300' },
-  { value: 'CANCELED', label: 'Отменено', color: 'bg-red-100 text-red-800 border-red-300' },
+const STATUS_OPTIONS: {
+  value: BookingStatus | 'ALL'
+  label: string
+  tone: 'secondary' | 'warning' | 'success' | 'info' | 'destructive'
+}[] = [
+  { value: 'ALL', label: 'Все', tone: 'secondary' },
+  { value: 'PENDING', label: 'Ожидает', tone: 'warning' },
+  { value: 'CONFIRMED', label: 'Подтверждено', tone: 'success' },
+  { value: 'COMPLETED', label: 'Завершено', tone: 'info' },
+  { value: 'CANCELED', label: 'Отменено', tone: 'destructive' },
 ]
 
 export function SchedulePage() {
@@ -45,6 +49,7 @@ export function SchedulePage() {
   const [filterCourts, setFilterCourts] = useState<number[]>([])
   const [filterCoach, setFilterCoach] = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('ALL')
+  const [onlyFreeNow, setOnlyFreeNow] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['schedule', date],
@@ -86,6 +91,10 @@ export function SchedulePage() {
     setDate(formatDateInput(addDays(new Date(date), 1)))
   }
 
+  function setQuickDate(offsetDays: number) {
+    setDate(formatDateInput(addDays(new Date(), offsetDays)))
+  }
+
   function toggleCourt(courtId: number) {
     setFilterCourts((prev) =>
       prev.includes(courtId) ? prev.filter((id) => id !== courtId) : [...prev, courtId]
@@ -96,9 +105,10 @@ export function SchedulePage() {
     setFilterCourts([])
     setFilterCoach('')
     setFilterStatus('ALL')
+    setOnlyFreeNow(false)
   }
 
-  const hasFilters = filterCourts.length > 0 || !!filterCoach || filterStatus !== 'ALL'
+  const hasFilters = filterCourts.length > 0 || !!filterCoach || filterStatus !== 'ALL' || onlyFreeNow
 
   // Merge canceled/completed bookings (fetched separately) into schedule courts by court_name
   const mergedCourts = useMemo(() => {
@@ -118,10 +128,50 @@ export function SchedulePage() {
     }))
   }, [data, filterStatus, canceledBookings, completedBookings])
 
+  const isTodaySelected = date === todayISO()
+
+  const busyCourtIdsNow = useMemo(() => {
+    if (!isTodaySelected) return new Set<number>()
+    const now = new Date()
+    const ids = new Set<number>()
+    for (const court of mergedCourts) {
+      const hasActiveBooking = court.bookings.some((b) => {
+        if (b.status === 'CANCELED') return false
+        const start = new Date(b.start_time)
+        const end = new Date(b.end_time)
+        return start <= now && end > now
+      })
+      if (hasActiveBooking) ids.add(court.court_id)
+    }
+    return ids
+  }, [mergedCourts, isTodaySelected])
+
+  const effectiveCourtFilter = useMemo(() => {
+    const manuallyFiltered = new Set(filterCourts)
+    if (!onlyFreeNow || !isTodaySelected) return filterCourts
+
+    const freeNowIds = mergedCourts
+      .map((c) => c.court_id)
+      .filter((id) => !busyCourtIdsNow.has(id))
+
+    if (manuallyFiltered.size === 0) return freeNowIds
+    return freeNowIds.filter((id) => manuallyFiltered.has(id))
+  }, [onlyFreeNow, isTodaySelected, mergedCourts, busyCourtIdsNow, filterCourts])
+
+  useEffect(() => {
+    if (!isTodaySelected && onlyFreeNow) {
+      setOnlyFreeNow(false)
+    }
+  }, [isTodaySelected, onlyFreeNow])
+
   // Compute stats from schedule data (use canceledBookings count separately since they're not in schedule)
   const stats = useMemo(() => {
     if (!data) return null
     const allBookings = data.schedule.flatMap((c) => c.bookings)
+    const totalCourts = data.schedule.length
+    const busyNow = isTodaySelected ? busyCourtIdsNow.size : 0
+    const freeNow = isTodaySelected ? Math.max(totalCourts - busyNow, 0) : 0
+    const occupancyNow = isTodaySelected && totalCourts > 0 ? Math.round((busyNow / totalCourts) * 100) : 0
     return {
       total: allBookings.filter((b) => b.status !== 'CANCELED').length,
       pending: allBookings.filter((b) => b.status === 'PENDING').length,
@@ -130,8 +180,12 @@ export function SchedulePage() {
       completed: filterStatus === 'COMPLETED' && completedBookings.length > 0
         ? completedBookings.length
         : allBookings.filter((b) => b.status === 'COMPLETED').length,
+      totalCourts,
+      busyNow,
+      freeNow,
+      occupancyNow,
     }
-  }, [data, canceledBookings, completedBookings])
+  }, [data, canceledBookings, completedBookings, filterStatus, isTodaySelected, busyCourtIdsNow])
 
   // Collect all unique coaches from today's schedule
   const scheduleCoaches = useMemo(() => {
@@ -163,7 +217,7 @@ export function SchedulePage() {
       />
 
       {/* Date navigation + stats */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="surface-elevated rounded-xl p-3 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={prev}>
             <ChevronLeft className="h-4 w-4" />
@@ -172,7 +226,7 @@ export function SchedulePage() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="border rounded-md px-3 py-1.5 text-sm"
+            className="h-10 rounded-md border border-input bg-background/85 px-3.5 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/65"
           />
           <Button variant="outline" size="icon" onClick={next}>
             <ChevronRight className="h-4 w-4" />
@@ -190,6 +244,16 @@ export function SchedulePage() {
           </Button>
         </div>
 
+        <div className="h-5 w-px bg-border" />
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setQuickDate(1)}>
+            Завтра
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setQuickDate(7)}>
+            +7 дней
+          </Button>
+        </div>
+
         {/* Stats pills */}
         {stats && (
           <div className="flex items-center gap-2 ml-auto flex-wrap">
@@ -197,25 +261,18 @@ export function SchedulePage() {
             <Badge variant="outline" className="text-xs gap-1">
               Всего <strong>{stats.total}</strong>
             </Badge>
-            {stats.pending > 0 && (
-              <Badge className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
-                Ожидает {stats.pending}
-              </Badge>
-            )}
-            {stats.confirmed > 0 && (
-              <Badge className="text-xs bg-green-100 text-green-800 border-green-300 hover:bg-green-100">
-                Подтверждено {stats.confirmed}
-              </Badge>
-            )}
-            {stats.completed > 0 && (
-              <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100">
-                Завершено {stats.completed}
-              </Badge>
-            )}
-            {stats.canceled > 0 && (
-              <Badge className="text-xs bg-red-100 text-red-800 border-red-300 hover:bg-red-100">
-                Отменено {stats.canceled}
-              </Badge>
+            {stats.pending > 0 && <Badge variant="warning" className="text-xs">Ожидает {stats.pending}</Badge>}
+            {stats.confirmed > 0 && <Badge variant="success" className="text-xs">Подтверждено {stats.confirmed}</Badge>}
+            {stats.completed > 0 && <Badge variant="info" className="text-xs">Завершено {stats.completed}</Badge>}
+            {stats.canceled > 0 && <Badge variant="destructive" className="text-xs">Отменено {stats.canceled}</Badge>}
+            <div className="w-px h-4 bg-border mx-0.5" />
+            <Badge variant="secondary" className="text-xs">Корты {stats.totalCourts}</Badge>
+            {isTodaySelected && (
+              <>
+                <Badge variant="outline" className="text-xs">Занято сейчас {stats.busyNow}</Badge>
+                <Badge variant="outline" className="text-xs">Свободно {stats.freeNow}</Badge>
+                <Badge variant="outline" className="text-xs">Загрузка {stats.occupancyNow}%</Badge>
+              </>
             )}
           </div>
         )}
@@ -223,7 +280,7 @@ export function SchedulePage() {
 
       {/* Filter bar */}
       {data && (
-        <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/40 rounded-lg border">
+        <div className="surface-elevated rounded-xl flex flex-wrap items-center gap-3 p-3">
           <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
 
           {/* Status filter */}
@@ -238,7 +295,13 @@ export function SchedulePage() {
                   filterStatus === opt.value
                     ? opt.value === 'ALL'
                       ? 'bg-foreground text-background border-foreground'
-                      : cn(opt.color, 'border opacity-100 ring-2 ring-offset-1 ring-current')
+                      : cn(
+                          opt.tone === 'warning' && 'bg-amber-500/15 text-amber-900 border-amber-500/30',
+                          opt.tone === 'success' && 'bg-emerald-500/15 text-emerald-800 border-emerald-500/30',
+                          opt.tone === 'info' && 'bg-blue-500/15 text-blue-800 border-blue-500/30',
+                          opt.tone === 'destructive' && 'bg-red-500/15 text-red-800 border-red-500/30',
+                          'border opacity-100 ring-1 ring-offset-1 ring-foreground/30'
+                        )
                     : 'bg-background text-muted-foreground border-border hover:border-foreground/30'
                 )}
               >
@@ -263,6 +326,20 @@ export function SchedulePage() {
               ))}
             </SelectContent>
           </Select>
+
+          <div className="w-px h-5 bg-border" />
+
+          <Button
+            type="button"
+            variant={onlyFreeNow ? 'default' : 'outline'}
+            size="sm"
+            className="h-7 text-xs"
+            disabled={!isTodaySelected}
+            onClick={() => setOnlyFreeNow((v) => !v)}
+            title={isTodaySelected ? 'Показать только свободные корты на текущее время' : 'Работает только для текущей даты'}
+          >
+            Только свободные сейчас
+          </Button>
 
           <div className="w-px h-5 bg-border" />
 
@@ -311,7 +388,7 @@ export function SchedulePage() {
         <ScheduleGrid
           courts={mergedCourts}
           date={date}
-          filterCourts={filterCourts}
+          filterCourts={effectiveCourtFilter}
           filterCoach={filterCoach || null}
           filterStatus={filterStatus !== 'ALL' ? filterStatus : null}
           startHour={startHour}
@@ -319,7 +396,12 @@ export function SchedulePage() {
         />
       ) : null}
 
-      <CreateBookingModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <CreateBookingModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        openHour={startHour}
+        closeHour={endHour}
+      />
     </div>
   )
 }

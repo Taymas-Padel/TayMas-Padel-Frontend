@@ -88,7 +88,7 @@ export function DirectorDashboard() {
       </div>
 
       {data?.revenue_structure && (
-        <Card>
+        <Card className="surface-elevated rounded-xl">
           <CardHeader>
             <CardTitle className="text-base">Структура выручки</CardTitle>
           </CardHeader>
@@ -100,7 +100,7 @@ export function DirectorDashboard() {
                 return (
                   <div key={item.type} className="flex items-center gap-4">
                     <div className="w-36 text-sm text-muted-foreground shrink-0 truncate">{item.label}</div>
-                    <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                    <div className="flex-1 bg-muted rounded-full h-2.5 overflow-hidden">
                       <div
                         className="bg-primary h-full rounded-full transition-all duration-500"
                         style={{ width: `${percent}%` }}
@@ -117,7 +117,7 @@ export function DirectorDashboard() {
               })}
             </div>
             {data.work_hours && (
-              <p className="text-xs text-muted-foreground mt-5 pt-4 border-t border-slate-100">
+              <p className="text-xs text-muted-foreground mt-5 pt-4 border-t border-border">
                 Часы работы клуба: {data.work_hours}
               </p>
             )}

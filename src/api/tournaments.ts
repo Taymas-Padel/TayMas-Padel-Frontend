@@ -1,4 +1,5 @@
 import { apiClient } from './client'
+import { AxiosError } from 'axios'
 import type {
   Tournament,
   TournamentTeam,
@@ -72,9 +73,16 @@ export async function generateBracket(tournamentId: number): Promise<{ detail: s
   return data
 }
 
-export async function getBracket(tournamentId: number): Promise<Bracket> {
-  const { data } = await apiClient.get<Bracket>(`/tournaments/${tournamentId}/bracket/`)
-  return data
+export async function getBracket(tournamentId: number): Promise<Bracket | null> {
+  try {
+    const { data } = await apiClient.get<Bracket>(`/tournaments/${tournamentId}/bracket/`)
+    return data
+  } catch (error) {
+    if (error instanceof AxiosError && error.response?.status === 404) {
+      return null
+    }
+    throw error
+  }
 }
 
 // Matches

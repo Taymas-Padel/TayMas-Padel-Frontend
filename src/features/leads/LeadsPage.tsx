@@ -17,7 +17,7 @@ export function LeadsPage() {
         title="Воронка продаж"
         description="Управление лидами и отслеживание сделок"
         actions={
-          <div className="flex items-center rounded-lg border p-0.5 gap-0.5">
+          <div className="surface-elevated rounded-lg flex items-center p-1 gap-1">
             <Button
               variant={view === 'kanban' ? 'default' : 'ghost'}
               size="sm"

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { Plus, Loader2 } from 'lucide-react'
@@ -13,6 +13,7 @@ import { LEAD_STAGES } from '@/constants/leads'
 import { parseApiError } from '@/utils/error'
 import type { KanbanColumn, LeadStage, CreateLeadData } from '@/types/lead'
 import { useMutation } from '@tanstack/react-query'
+import { cn } from '@/utils/cn'
 
 export function KanbanBoard() {
   const qc = useQueryClient()
@@ -20,16 +21,44 @@ export function KanbanBoard() {
   const [createOpen, setCreateOpen] = useState(false)
   const [createStage, setCreateStage] = useState<LeadStage>('NEW')
 
-  const { data: columns = [], isLoading } = useQuery({
+  const { data: serverColumns = [], isLoading } = useQuery({
     queryKey: ['kanban'],
     queryFn: () => getKanban(),
   })
+  const [columns, setColumns] = useState<KanbanColumn[]>([])
+
+  function applyMove(
+    sourceColumns: KanbanColumn[],
+    source: DropResult['source'],
+    destination: NonNullable<DropResult['destination']>,
+    newStage: LeadStage
+  ) {
+    const next = sourceColumns.map((col) => ({ ...col, leads: [...col.leads] }))
+    const srcCol = next.find((c) => c.stage === source.droppableId)
+    const dstCol = next.find((c) => c.stage === destination.droppableId)
+    if (!srcCol || !dstCol) return null
+    const [moved] = srcCol.leads.splice(source.index, 1)
+    if (!moved) return null
+    dstCol.leads.splice(destination.index, 0, { ...moved, stage: newStage })
+    srcCol.count = srcCol.leads.length
+    dstCol.count = dstCol.leads.length
+    return next
+  }
 
   const moveMutation = useMutation({
-    mutationFn: ({ id, stage }: { id: number; stage: LeadStage }) => moveLead(id, stage),
-    onError: (err) => {
+    mutationFn: ({
+      id,
+      stage,
+    }: {
+      id: number
+      stage: LeadStage
+      sourceStage: LeadStage
+      previousColumns: KanbanColumn[]
+    }) => moveLead(id, stage),
+    onError: (err, variables) => {
       toast.error(parseApiError(err))
-      qc.invalidateQueries({ queryKey: ['kanban'] })
+      setColumns(variables.previousColumns)
+      qc.setQueryData(['kanban'], variables.previousColumns)
     },
   })
 
@@ -43,29 +72,31 @@ export function KanbanBoard() {
     onError: (err) => toast.error(parseApiError(err)),
   })
 
+  useEffect(() => {
+    // Не перетираем optimistic-состояние доски пока move запрос в полёте.
+    if (!moveMutation.isPending) {
+      setColumns(serverColumns)
+    }
+  }, [serverColumns, moveMutation.isPending])
+
   function onDragEnd(result: DropResult) {
     const { destination, source, draggableId } = result
     if (!destination) return
     if (destination.droppableId === source.droppableId && destination.index === source.index) return
 
-    const leadId = parseInt(draggableId)
+    const leadId = Number.parseInt(draggableId, 10)
+    const sourceStage = source.droppableId as LeadStage
     const newStage = destination.droppableId as LeadStage
+    const previousColumns = columns
+    const next = applyMove(columns, source, destination, newStage)
+    if (!next) return
+    setColumns(next)
+    qc.setQueryData(['kanban'], next)
+    // Локальная перестановка в пределах одной колонки — без API,
+    // иначе сервер вернет старый порядок и визуально откатит карточку.
+    if (sourceStage === newStage) return
 
-    // Optimistic update
-    qc.setQueryData<KanbanColumn[]>(['kanban'], (old) => {
-      if (!old) return old
-      const next = old.map((col) => ({ ...col, leads: [...col.leads] }))
-      const srcCol = next.find((c) => c.stage === source.droppableId)
-      const dstCol = next.find((c) => c.stage === destination.droppableId)
-      if (!srcCol || !dstCol) return old
-      const [moved] = srcCol.leads.splice(source.index, 1)
-      dstCol.leads.splice(destination.index, 0, { ...moved, stage: newStage })
-      srcCol.count = srcCol.leads.length
-      dstCol.count = dstCol.leads.length
-      return next
-    })
-
-    moveMutation.mutate({ id: leadId, stage: newStage })
+    moveMutation.mutate({ id: leadId, stage: newStage, sourceStage, previousColumns })
   }
 
   if (isLoading) {
@@ -79,23 +110,44 @@ export function KanbanBoard() {
   return (
     <>
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <div
+          className="flex gap-3 overflow-x-auto pb-4 rounded-xl"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
           {columns.map((col) => {
             const meta = LEAD_STAGES[col.stage]
             return (
-              <div key={col.stage} className={`flex flex-col rounded-xl border-2 ${meta.bgColor} min-w-[260px] w-[260px] shrink-0`}>
+              <div
+                key={col.stage}
+                className={cn(
+                  'flex flex-col rounded-xl border border-border/70 bg-card',
+                  'min-w-[286px] w-[286px] shrink-0',
+                  meta.columnSurface,
+                  'border-l-2',
+                  meta.borderL
+                )}
+              >
                 {/* Column header */}
-                <div className="flex items-center justify-between px-3 py-2.5">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-border/60">
                   <div className="flex items-center gap-2">
-                    <span className={`text-sm font-semibold ${meta.color}`}>{meta.label}</span>
-                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full bg-white/70 ${meta.color}`}>
+                    <span className={cn('h-2 w-2 rounded-full', meta.accentDot)} />
+                    <span className={cn('text-[12px] font-medium', meta.accentText)}>
+                      {meta.label}
+                    </span>
+                    <span
+                      className={cn(
+                        'text-[11px] font-semibold px-1.5 py-0.5 rounded-md border leading-none',
+                        meta.pillBgBorder,
+                        'text-foreground/75'
+                      )}
+                    >
                       {col.count}
                     </span>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6"
+                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
                     onClick={() => {
                       setCreateStage(col.stage)
                       setCreateOpen(true)
@@ -111,9 +163,10 @@ export function KanbanBoard() {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex-1 px-2 pb-2 space-y-2 min-h-[100px] transition-colors ${
-                        snapshot.isDraggingOver ? 'bg-black/5 rounded-b-xl' : ''
-                      }`}
+                      className={cn(
+                        'flex-1 px-2 pb-2 pt-2 space-y-2 min-h-[100px] transition-colors rounded-b-xl',
+                        snapshot.isDraggingOver && 'bg-primary/5 dark:bg-primary/10'
+                      )}
                     >
                       {col.leads.map((lead, index) => (
                         <Draggable key={lead.id} draggableId={lead.id.toString()} index={index}>
@@ -124,8 +177,10 @@ export function KanbanBoard() {
                               {...drag.dragHandleProps}
                               style={{
                                 ...drag.draggableProps.style,
-                                opacity: snap.isDragging ? 0.8 : 1,
+                                opacity: 1,
+                                transitionDuration: snap.isDropAnimating ? '120ms' : undefined,
                               }}
+                              className={cn(snap.isDragging && 'shadow-xl')}
                             >
                               <LeadCard lead={lead} onClick={() => setSelectedLeadId(lead.id)} />
                             </div>

@@ -56,7 +56,7 @@ export function LoginPage() {
   }
 
   return (
-    <Card className="shadow-sm border-slate-200/60">
+    <Card className="surface-elevated border-border">
       <CardHeader className="space-y-1.5 pb-4">
         <CardTitle className="text-2xl">Вход в систему</CardTitle>
         <CardDescription>Введите ваши учётные данные для доступа</CardDescription>

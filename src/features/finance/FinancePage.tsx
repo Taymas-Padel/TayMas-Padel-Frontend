@@ -64,7 +64,7 @@ function TransactionTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3 flex-wrap items-center">
+      <div className="surface-elevated rounded-xl p-3 flex gap-3 flex-wrap items-center">
         <Input
           type="date"
           value={date}
@@ -105,7 +105,7 @@ function TransactionTable() {
       ) : transactions.length === 0 ? (
         <p className="text-center py-16 text-muted-foreground text-sm">Транзакции не найдены</p>
       ) : (
-        <div className="border rounded-xl overflow-hidden bg-white">
+        <div className="surface-elevated rounded-xl overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -150,7 +150,7 @@ function SummaryTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2">
+      <div className="surface-elevated rounded-xl p-2 inline-flex gap-2">
         {(['today', 'month', 'all'] as Period[]).map((p) => (
           <Button
             key={p}
@@ -169,7 +169,7 @@ function SummaryTab() {
         </div>
       ) : data ? (
         <div className="space-y-4">
-          <Card>
+          <Card className="surface-elevated rounded-xl">
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">Итого</p>
               <p className="text-4xl font-bold mt-1">{formatMoney(data.total.toString())}</p>
@@ -177,7 +177,7 @@ function SummaryTab() {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
+            <Card className="surface-elevated rounded-xl">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   По способу оплаты
@@ -193,7 +193,7 @@ function SummaryTab() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="surface-elevated rounded-xl">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   По типу операции

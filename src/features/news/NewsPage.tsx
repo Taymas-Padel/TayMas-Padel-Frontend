@@ -29,11 +29,11 @@ const CATEGORY_LABELS: Record<NewsCategory, string> = {
   ANNOUNCEMENT: 'Объявление',
 }
 
-const CATEGORY_COLORS: Record<NewsCategory, string> = {
-  NEWS: 'bg-blue-100 text-blue-700',
-  EVENT: 'bg-purple-100 text-purple-700',
-  PROMO: 'bg-green-100 text-green-700',
-  ANNOUNCEMENT: 'bg-orange-100 text-orange-700',
+const CATEGORY_VARIANTS: Record<NewsCategory, 'info' | 'default' | 'success' | 'warning'> = {
+  NEWS: 'info',
+  EVENT: 'default',
+  PROMO: 'success',
+  ANNOUNCEMENT: 'warning',
 }
 
 const schema = z.object({
@@ -213,9 +213,9 @@ export function NewsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${CATEGORY_COLORS[n.category]}`}>
+                      <Badge variant={CATEGORY_VARIANTS[n.category]} className="text-xs">
                         {CATEGORY_LABELS[n.category]}
-                      </span>
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {n.created_at_formatted}

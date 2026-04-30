@@ -32,8 +32,8 @@ export function LeadStats() {
                 <p className="text-sm text-muted-foreground">Всего лидов</p>
                 <p className="text-3xl font-bold mt-1">{data.total}</p>
               </div>
-              <div className="p-2 rounded-lg bg-blue-50">
-                <Users className="h-5 w-5 text-blue-600" />
+              <div className="p-2 rounded-lg bg-blue-500/12">
+                <Users className="h-5 w-5 text-blue-700 dark:text-blue-300" />
               </div>
             </div>
           </CardContent>
@@ -43,10 +43,10 @@ export function LeadStats() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Продаж</p>
-                <p className="text-3xl font-bold mt-1 text-green-600">{data.sold_count}</p>
+                <p className="text-3xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">{data.sold_count}</p>
               </div>
-              <div className="p-2 rounded-lg bg-green-50">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+              <div className="p-2 rounded-lg bg-emerald-500/12">
+                <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
           </CardContent>
@@ -79,7 +79,7 @@ export function LeadStats() {
             return (
               <div key={s.stage} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
-                  <span className={`font-medium ${meta.color}`}>{meta.label}</span>
+                  <span className={`font-medium ${meta.accentText}`}>{meta.label}</span>
                   <span className="text-muted-foreground">
                     {s.count} ({s.percent.toFixed(1)}%)
                   </span>

@@ -36,12 +36,12 @@ const ROLE_LABELS: Record<StaffRole, string> = {
   COACH_FITNESS: 'Тренер (Фитнес)',
 }
 
-const ROLE_COLORS: Record<StaffRole, string> = {
-  ADMIN: 'bg-purple-100 text-purple-800 border-purple-200',
-  RECEPTIONIST: 'bg-blue-100 text-blue-800 border-blue-200',
-  SALES_MANAGER: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  COACH_PADEL: 'bg-orange-100 text-orange-800 border-orange-200',
-  COACH_FITNESS: 'bg-rose-100 text-rose-800 border-rose-200',
+const ROLE_VARIANTS: Record<StaffRole, 'default' | 'info' | 'success' | 'warning' | 'secondary'> = {
+  ADMIN: 'default',
+  RECEPTIONIST: 'info',
+  SALES_MANAGER: 'success',
+  COACH_PADEL: 'warning',
+  COACH_FITNESS: 'secondary',
 }
 
 const ROLE_FILTER_TABS: { value: StaffRole | 'ALL'; label: string }[] = [
@@ -486,7 +486,7 @@ export function StaffPage() {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="border rounded-xl overflow-hidden bg-white">
+          <div className="border rounded-xl overflow-hidden bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -526,7 +526,7 @@ export function StaffPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={cn('text-xs', ROLE_COLORS[member.role])}>
+                        <Badge variant={ROLE_VARIANTS[member.role]} className="text-xs">
                           {ROLE_LABELS[member.role]}
                         </Badge>
                       </TableCell>

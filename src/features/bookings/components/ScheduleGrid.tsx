@@ -69,6 +69,14 @@ export function ScheduleGrid({ courts, date, filterCourts, filterCoach, filterSt
     ? courts.filter((c) => filterCourts.includes(c.court_id))
     : courts
 
+  if (visibleCourts.length === 0) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+        По выбранным фильтрам нет доступных кортов.
+      </div>
+    )
+  }
+
   function isBookingDimmed(booking: Booking): boolean {
     if (!hasActiveFilters) return false
     if (filterCoach && booking.coach_name !== filterCoach) return true
@@ -186,6 +194,8 @@ export function ScheduleGrid({ courts, date, filterCourts, filterCoach, filterSt
         onClose={() => setCreateOpen(false)}
         prefillCourt={createCourt}
         prefillStart={createStart}
+        openHour={startHour}
+        closeHour={endHour}
       />
     </>
   )

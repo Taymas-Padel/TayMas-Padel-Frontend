@@ -12,17 +12,17 @@ interface KpiCardProps {
 }
 
 const variantStyles = {
-  default: 'border-slate-200/80',
-  success: 'border-emerald-200/80 bg-emerald-50/50',
-  warning: 'border-amber-200/80 bg-amber-50/50',
-  danger: 'border-red-200/80 bg-red-50/50',
+  default: 'border-border bg-card/95',
+  success: 'border-emerald-500/25 bg-emerald-500/[0.07]',
+  warning: 'border-amber-500/25 bg-amber-500/[0.07]',
+  danger: 'border-red-500/25 bg-red-500/[0.07]',
 }
 
 const iconStyles = {
-  default: 'bg-primary/10 text-primary',
-  success: 'bg-emerald-100 text-emerald-600',
-  warning: 'bg-amber-100 text-amber-600',
-  danger: 'bg-red-100 text-red-600',
+  default: 'bg-primary/12 text-primary',
+  success: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  warning: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
+  danger: 'bg-red-500/15 text-red-600 dark:text-red-400',
 }
 
 export function KpiCard({
@@ -35,7 +35,7 @@ export function KpiCard({
 }: KpiCardProps) {
   if (isLoading) {
     return (
-      <Card className="border-slate-200/80">
+      <Card className="border-border bg-card/95">
         <CardContent className="p-5">
           <div className="flex items-start justify-between">
             <div className="space-y-2.5 flex-1">
@@ -51,12 +51,17 @@ export function KpiCard({
   }
 
   return (
-    <Card className={cn('transition-shadow hover:shadow-sm', variantStyles[variant])}>
+    <Card
+      className={cn(
+        'transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_12px_24px_hsl(var(--foreground)/0.08)]',
+        variantStyles[variant]
+      )}
+    >
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div className="space-y-1 min-w-0">
-            <p className="text-[13px] font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold tracking-tight truncate">{value}</p>
+            <p className="brand-label text-muted-foreground">{title}</p>
+            <p className="text-2xl font-bold tracking-tight truncate mt-1">{value}</p>
             {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </div>
           {icon && (

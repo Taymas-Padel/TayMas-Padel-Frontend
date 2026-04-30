@@ -23,6 +23,7 @@ import {
 import { formatDate } from '@/utils/date'
 import { parseApiError } from '@/utils/error'
 import type { ClubSetting } from '@/api/core'
+import { AxiosError } from 'axios'
 
 // ─── Club Settings ───────────────────────────────────────────────────────────
 
@@ -191,7 +192,13 @@ export function CoreSettingsPage() {
       qc.invalidateQueries({ queryKey: ['closed-days'] })
       setDeleteId(null)
     },
-    onError: (err) => toast.error(parseApiError(err)),
+    onError: (err) => {
+      if (err instanceof AxiosError && err.response?.status === 404) {
+        toast.error('Удаление выходного дня не поддерживается на сервере (404 endpoint).')
+        return
+      }
+      toast.error(parseApiError(err))
+    },
   })
 
   return (

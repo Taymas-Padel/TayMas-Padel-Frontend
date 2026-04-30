@@ -17,6 +17,16 @@ export function CommentSection({ leadId }: CommentSectionProps) {
   const qc = useQueryClient()
   const [text, setText] = useState('')
 
+  const invalidateLeadRelatedQueries = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ['lead-comments', leadId] }),
+      qc.invalidateQueries({ queryKey: ['lead-tasks', leadId] }),
+      qc.invalidateQueries({ queryKey: ['lead', leadId] }),
+      qc.invalidateQueries({ queryKey: ['kanban'] }),
+      qc.invalidateQueries({ queryKey: ['leads'] }),
+      qc.invalidateQueries({ queryKey: ['lead-stats'] }),
+    ])
+
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['lead-comments', leadId],
     queryFn: () => getLeadComments(leadId),
@@ -24,16 +34,18 @@ export function CommentSection({ leadId }: CommentSectionProps) {
 
   const addMutation = useMutation({
     mutationFn: (t: string) => addLeadComment(leadId, t),
-    onSuccess: () => {
+    onSuccess: async () => {
       setText('')
-      qc.invalidateQueries({ queryKey: ['lead-comments', leadId] })
+      await invalidateLeadRelatedQueries()
     },
     onError: (err) => toast.error(parseApiError(err)),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (commentId: number) => deleteLeadComment(leadId, commentId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['lead-comments', leadId] }),
+    onSuccess: async () => {
+      await invalidateLeadRelatedQueries()
+    },
     onError: (err) => toast.error(parseApiError(err)),
   })
 

@@ -25,6 +25,17 @@ import { usePermissions } from '@/hooks/usePermissions'
 import type { ClientUser } from '@/types/client'
 import { resolveMediaUrl } from '@/utils/media'
 
+function formatMembershipBalance(hoursRemaining: string | null, visitsRemaining: number | null) {
+  if (hoursRemaining != null) {
+    const hours = Number(hoursRemaining)
+    return Number.isFinite(hours) && hours <= 0 ? 'Закончился' : `${hoursRemaining} ч`
+  }
+  if (visitsRemaining != null) {
+    return visitsRemaining <= 0 ? 'Закончился' : `${visitsRemaining} пос.`
+  }
+  return '—'
+}
+
 export function ClientDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -269,11 +280,7 @@ export function ClientDetail() {
                   </TableHeader>
                   <TableBody>
                     {memberships.map((m) => {
-                      const balance = m.hours_remaining != null
-                        ? `${m.hours_remaining} ч`
-                        : m.visits_remaining != null
-                        ? `${m.visits_remaining} пос.`
-                        : '—'
+                      const balance = formatMembershipBalance(m.hours_remaining, m.visits_remaining)
                       return (
                         <TableRow key={m.id}>
                           <TableCell className="font-medium">{m.membership_type_name}</TableCell>
@@ -284,7 +291,7 @@ export function ClientDetail() {
                             <div className="flex gap-1 flex-wrap">
                               <ActiveBadge isActive={m.is_active} />
                               {m.is_frozen && (
-                                <Badge variant="outline" className="text-blue-600 border-blue-300 bg-blue-50 text-xs">
+                                <Badge variant="info" className="text-xs">
                                   Заморожен
                                 </Badge>
                               )}

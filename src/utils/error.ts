@@ -6,6 +6,15 @@ export function parseApiError(error: unknown): string {
     const status = error.response?.status
     if (!data) return error.message || `Ошибка ${status ?? ''}`
 
+    // Иногда бэкенд отдает HTML-страницу ошибки (404/500). Не расписываем её по символам.
+    if (typeof data === 'string') {
+      const looksLikeHtml = /<(!doctype|html|head|body)\b/i.test(data)
+      if (looksLikeHtml) {
+        return `Сервер вернул ошибку ${status ?? ''}. Проверьте endpoint на бэкенде.`
+      }
+      return data.trim() || error.message || `Ошибка ${status ?? ''}`
+    }
+
     // { detail: "..." }
     if (typeof data.detail === 'string') return data.detail
 

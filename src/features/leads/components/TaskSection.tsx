@@ -19,6 +19,16 @@ export function TaskSection({ leadId }: TaskSectionProps) {
   const [title, setTitle] = useState('')
   const [dueDatetime, setDueDatetime] = useState('')
 
+  const invalidateLeadRelatedQueries = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ['lead-tasks', leadId] }),
+      qc.invalidateQueries({ queryKey: ['lead-comments', leadId] }),
+      qc.invalidateQueries({ queryKey: ['lead', leadId] }),
+      qc.invalidateQueries({ queryKey: ['kanban'] }),
+      qc.invalidateQueries({ queryKey: ['leads'] }),
+      qc.invalidateQueries({ queryKey: ['lead-stats'] }),
+    ])
+
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['lead-tasks', leadId],
     queryFn: () => getLeadTasks(leadId),
@@ -26,11 +36,11 @@ export function TaskSection({ leadId }: TaskSectionProps) {
 
   const addMutation = useMutation({
     mutationFn: () => addLeadTask(leadId, { title, due_datetime: dueDatetime }),
-    onSuccess: () => {
+    onSuccess: async () => {
       setTitle('')
       setDueDatetime('')
       setAddOpen(false)
-      qc.invalidateQueries({ queryKey: ['lead-tasks', leadId] })
+      await invalidateLeadRelatedQueries()
     },
     onError: (err) => toast.error(parseApiError(err)),
   })
@@ -38,13 +48,17 @@ export function TaskSection({ leadId }: TaskSectionProps) {
   const toggleMutation = useMutation({
     mutationFn: ({ taskId, isDone }: { taskId: number; isDone: boolean }) =>
       updateLeadTask(leadId, taskId, { is_done: isDone }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['lead-tasks', leadId] }),
+    onSuccess: async () => {
+      await invalidateLeadRelatedQueries()
+    },
     onError: (err) => toast.error(parseApiError(err)),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (taskId: number) => deleteLeadTask(leadId, taskId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['lead-tasks', leadId] }),
+    onSuccess: async () => {
+      await invalidateLeadRelatedQueries()
+    },
     onError: (err) => toast.error(parseApiError(err)),
   })
 

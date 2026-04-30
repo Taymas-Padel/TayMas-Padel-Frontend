@@ -432,7 +432,7 @@ export function CourtsPage() {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="border rounded-xl overflow-hidden bg-white">
+          <div className="border rounded-xl overflow-hidden bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
