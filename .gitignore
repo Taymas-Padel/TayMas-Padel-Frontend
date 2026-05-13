@@ -3,11 +3,31 @@ node_modules/
 
 # Build output
 dist/
+dist-ssr/
 
-# Environment files
+# TypeScript
+*.tsbuildinfo
+
+# Environment (secrets — do not commit)
 .env
 .env.*
 !.env.example
+
+# Tool / bundler caches
+.cache/
+.vite/
+.turbo/
+.eslintcache
+
+# Vercel CLI local project link (may contain account/project metadata)
+.vercel/
+
+# Keys / certs (accidental paste)
+*.pem
+*.key
+
+# Test coverage
+coverage/
 
 # Python virtual environments/cache
 .venv/
@@ -31,5 +51,4 @@ pnpm-debug.log*
 
 # OS
 .DS_Store
-
-# test commit marker
+Thumbs.db
