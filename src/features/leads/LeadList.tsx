@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -16,14 +14,13 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { parseApiError } from '@/utils/error'
 import type { LeadStage, CreateLeadData } from '@/types/lead'
 
-export function LeadList() {
+export function LeadList({ searchFilter = '' }: { searchFilter?: string }) {
   const qc = useQueryClient()
-  const [search, setSearch] = useState('')
   const [stage, setStage] = useState<LeadStage | ''>('')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
 
-  const debouncedSearch = useDebounce(search, 300)
+  const debouncedSearch = useDebounce(searchFilter, 300)
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ['leads', { stage, search: debouncedSearch }],
@@ -46,21 +43,12 @@ export function LeadList() {
   return (
     <>
       <div className="space-y-4">
-        <div className="surface-elevated rounded-xl p-3 flex gap-3 flex-wrap items-center">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Поиск по имени, телефону..."
-              className="pl-9"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+        <div className="flex gap-3 items-center">
           <Select
             value={stage || '_all'}
             onValueChange={(v) => setStage(v === '_all' ? '' : v as LeadStage)}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px] h-9 text-[13px]">
               <SelectValue placeholder="Все стадии" />
             </SelectTrigger>
             <SelectContent>
@@ -70,10 +58,6 @@ export function LeadList() {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Новый лид
-          </Button>
         </div>
 
         {isLoading ? (
@@ -83,7 +67,7 @@ export function LeadList() {
         ) : leads.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground">Лиды не найдены</p>
         ) : (
-          <div className="surface-elevated rounded-xl overflow-hidden">
+          <div className="surface overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>

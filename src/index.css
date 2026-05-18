@@ -2,39 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TAYMAS design tokens — from brand/taymas_pattern.html + design system */
+/* TAYMAS design tokens — brand palette from spec */
 @layer base {
   :root {
-    --background: 45 15% 97%;
-    --foreground: 177 84% 12%;
-    --card: 0 0% 100%;
-    --card-foreground: 177 84% 12%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 177 84% 12%;
-    /* Main actions: deep ink (Pattern Studio primary button) */
-    --primary: 177 89% 11%;
-    --primary-foreground: 72 100% 97%;
-    --secondary: 210 18% 95%;
-    --secondary-foreground: 177 84% 12%;
-    --muted: 210 16% 93%;
-    --muted-foreground: 171 12% 42%;
-    /* Keep accent slightly branded, but not green-heavy */
-    --accent: 150 26% 92%;
-    --accent-foreground: 177 84% 12%;
+    /* TAYMAS Brand Colors (from spec) */
+    --tm-bg: #F5FFE6;       /* page background — soft sage paper */
+    --tm-paper: #FAFFF0;    /* surface / cards */
+    --tm-ink: #033431;      /* primary dark green text */
+    --tm-muted: #557570;    /* secondary text */
+    --tm-line: rgba(3,52,49,0.14); /* borders / dividers */
+    --tm-accent: #00CA74;   /* accent / CTA / success */
+    
+    /* Shadcn semantic tokens mapped to TAYMAS palette */
+    --background: 78 100% 95%;  /* --tm-bg */
+    --foreground: 177 89% 11%;  /* --tm-ink */
+    --card: 78 100% 97%;        /* --tm-paper */
+    --card-foreground: 177 89% 11%;
+    --popover: 78 100% 97%;
+    --popover-foreground: 177 89% 11%;
+    --primary: 177 89% 11%;     /* ink for main actions */
+    --primary-foreground: 78 100% 97%;
+    --secondary: 168 12% 94%;
+    --secondary-foreground: 177 89% 11%;
+    --muted: 168 12% 92%;
+    --muted-foreground: 171 15% 40%; /* --tm-muted */
+    --accent: 154 100% 40%;     /* --tm-accent #00CA74 */
+    --accent-foreground: 177 89% 11%;
     --destructive: 0 72% 48%;
-    --destructive-foreground: 72 100% 97%;
-    --border: 210 14% 87%;
-    --input: 210 14% 87%;
-    /* Brand accent / focus ring: #00CA74 */
-    --ring: 154 100% 40%;
-    --radius: 0.45rem;
-    /* Sidebar: always “ink” on light app (TAYMAS bar) */
+    --destructive-foreground: 0 0% 100%;
+    --border: 168 14% 86%;      /* --tm-line equivalent */
+    --input: 168 14% 86%;
+    --ring: 154 100% 40%;       /* accent for focus ring */
+    --radius: 0.375rem;         /* 6px — no large radii per spec */
+    
+    /* Sidebar: ink background (dark green TAYMAS bar) */
     --sidebar: 177 89% 11%;
     --sidebar-foreground: 82 100% 95%;
     --sidebar-border: 177 50% 16%;
     --sidebar-muted: 168 12% 55%;
     --nav-active: 154 100% 40%;
   }
+
+  .dark {
+    --tm-bg: #0F1A19;
+    --tm-paper: #162322;
+    --tm-ink: #E8F5E9;
+    --tm-muted: #8AA8A3;
+    --tm-line: rgba(232,245,233,0.12);
+    --tm-accent: #00CA74;
+    
+    --background: 172 30% 8%;
+    --foreground: 138 50% 94%;
+    --card: 172 25% 11%;
+    --card-foreground: 138 50% 94%;
+    --popover: 172 25% 11%;
+    --popover-foreground: 138 50% 94%;
+    --primary: 154 100% 42%;
+    --primary-foreground: 172 30% 8%;
+    --secondary: 172 20% 16%;
+    --secondary-foreground: 138 50% 94%;
+    --muted: 172 18% 14%;
+    --muted-foreground: 168 18% 60%;
+    --accent: 172 18% 16%;
+    --accent-foreground: 138 50% 94%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 138 50% 94%;
+    --border: 172 15% 20%;
+    --input: 172 15% 20%;
+    --ring: 154 100% 45%;
+    --sidebar: 172 35% 6%;
+    --sidebar-foreground: 138 50% 94%;
+    --sidebar-border: 172 18% 16%;
+    --sidebar-muted: 168 15% 55%;
+    --nav-active: 154 100% 45%;
+  }
+}
 
   .dark {
     --background: 218 22% 11%;
@@ -74,21 +116,19 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    font-feature-settings: "cv11", "ss01"; /* Inter OpenType features */
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background-image:
-      radial-gradient(circle at 10% 8%, hsl(var(--primary) / 0.035) 0, transparent 30%),
-      radial-gradient(circle at 90% 10%, hsl(var(--foreground) / 0.03) 0, transparent 32%),
-      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.985) 100%);
-    background-attachment: fixed;
+    /* Clean solid background per spec — no heavy gradients */
   }
 
   ::selection {
     @apply bg-primary/15;
   }
 
+  /* Compact scrollbars per spec */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -103,36 +143,64 @@
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/35;
+    @apply bg-muted-foreground/30;
+  }
+
+  /* Tabular numbers for finance/tables per spec */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
 @layer utilities {
-  .animate-in {
-    animation: animate-in 0.2s ease-out;
+  /* Screen reader only */
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+    clip: rect(0, 0, 0, 0);
   }
 
-  @keyframes animate-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+  /* Typography scale from spec */
+  .text-h1 {
+    @apply text-xl font-semibold tracking-tight;
   }
 
-  /* Optional: monospace labels (IBM Plex Mono from design PDF) */
-  .font-tabular-brand {
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.06em;
+  .text-h2 {
+    @apply text-base font-medium;
   }
 
+  .text-body {
+    @apply text-sm;
+  }
+
+  .text-table {
+    @apply text-[13px];
+  }
+
+  .text-caption {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .text-micro {
+    @apply text-[11px] font-medium uppercase tracking-widest;
+  }
+
+  /* Brand label from original */
   .brand-label {
     @apply font-mono uppercase tracking-[0.18em] text-[10px] text-muted-foreground;
   }
 
+  /* Surface with subtle border per spec — NO shadow on cards */
+  .surface {
+    @apply bg-card border border-border rounded-lg;
+  }
+
+  /* Elevated surface for drawers/popovers only */
   .surface-elevated {
-    @apply border border-border bg-card/95 shadow-[0_10px_30px_hsl(var(--foreground)/0.06)];
-    backdrop-filter: blur(8px);
+    @apply bg-card border border-border shadow-md;
+  }
+
+  /* Transitions — only colors, 150ms per spec */
+  .transition-default {
+    @apply transition-colors duration-150;
   }
 }

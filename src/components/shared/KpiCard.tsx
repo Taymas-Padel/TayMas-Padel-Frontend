@@ -1,4 +1,3 @@
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/utils/cn'
 
@@ -11,18 +10,26 @@ interface KpiCardProps {
   isLoading?: boolean
 }
 
+// Per spec: no heavy shadows, use border-line, subtle background tints
 const variantStyles = {
-  default: 'border-border bg-card/95',
-  success: 'border-emerald-500/25 bg-emerald-500/[0.07]',
-  warning: 'border-amber-500/25 bg-amber-500/[0.07]',
-  danger: 'border-red-500/25 bg-red-500/[0.07]',
+  default: 'border-border bg-card',
+  success: 'border-border bg-card',
+  warning: 'border-border bg-card',
+  danger: 'border-border bg-card',
 }
 
 const iconStyles = {
-  default: 'bg-primary/12 text-primary',
-  success: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-  warning: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
-  danger: 'bg-red-500/15 text-red-600 dark:text-red-400',
+  default: 'text-muted-foreground',
+  success: 'text-tm-accent',
+  warning: 'text-muted-foreground',
+  danger: 'text-muted-foreground',
+}
+
+const valueStyles = {
+  default: 'text-foreground',
+  success: 'text-foreground',
+  warning: 'text-foreground',
+  danger: 'text-foreground',
 }
 
 export function KpiCard({
@@ -35,42 +42,34 @@ export function KpiCard({
 }: KpiCardProps) {
   if (isLoading) {
     return (
-      <Card className="border-border bg-card/95">
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2.5 flex-1">
-              <Skeleton className="h-3.5 w-24" />
-              <Skeleton className="h-7 w-28" />
-              <Skeleton className="h-3 w-16" />
-            </div>
-            <Skeleton className="h-10 w-10 rounded-xl" />
+      <div className="surface p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-2 flex-1 min-w-0">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-6 w-24" />
           </div>
-        </CardContent>
-      </Card>
+          {icon && <Skeleton className="h-5 w-5 rounded" />}
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card
-      className={cn(
-        'transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_12px_24px_hsl(var(--foreground)/0.08)]',
-        variantStyles[variant]
-      )}
-    >
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1 min-w-0">
-            <p className="brand-label text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold tracking-tight truncate mt-1">{value}</p>
-            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-          </div>
-          {icon && (
-            <div className={cn('p-2.5 rounded-xl shrink-0', iconStyles[variant])}>
-              {icon}
-            </div>
-          )}
+    <div className={cn('surface p-4', variantStyles[variant])}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-caption truncate">{title}</p>
+          <p className={cn('text-lg font-semibold tabular-nums mt-0.5 truncate', valueStyles[variant])}>
+            {value}
+          </p>
+          {subtitle && <p className="text-caption mt-0.5">{subtitle}</p>}
         </div>
-      </CardContent>
-    </Card>
+        {icon && (
+          <div className={cn('shrink-0', iconStyles[variant])}>
+            {icon}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

@@ -8,19 +8,23 @@ interface EmptyStateProps {
   className?: string
 }
 
+/**
+ * Per spec: Lucide icon 24px (text-muted) + title 14px + text 13px secondary + CTA
+ * NO illustrations, decorative blobs, or emojis
+ */
 export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div className={cn('flex flex-col items-center justify-center py-16 text-center px-4', className)}>
+    <div className={cn('flex flex-col items-center justify-center py-12 text-center px-4', className)}>
       {icon && (
-        <div className="h-16 w-16 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-5">
+        <div className="text-muted-foreground/60 mb-3">
           {icon}
         </div>
       )}
-      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      <h3 className="text-sm font-medium text-foreground">{title}</h3>
       {description && (
-        <p className="text-muted-foreground text-sm mt-1.5 max-w-sm">{description}</p>
+        <p className="text-[13px] text-muted-foreground mt-1 max-w-xs">{description}</p>
       )}
-      {action && <div className="mt-5">{action}</div>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   )
 }

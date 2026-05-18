@@ -19,6 +19,14 @@ export default {
         mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
       },
       colors: {
+        /* TAYMAS Brand Colors — direct access */
+        bg: "var(--tm-bg)",
+        paper: "var(--tm-paper)",
+        ink: "var(--tm-ink)",
+        "tm-muted": "var(--tm-muted)",
+        line: "var(--tm-line)",
+        "tm-accent": "var(--tm-accent)",
+        /* Shadcn semantic tokens */
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

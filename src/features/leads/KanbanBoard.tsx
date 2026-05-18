@@ -15,7 +15,15 @@ import type { KanbanColumn, LeadStage, CreateLeadData } from '@/types/lead'
 import { useMutation } from '@tanstack/react-query'
 import { cn } from '@/utils/cn'
 
-export function KanbanBoard() {
+/**
+ * Kanban Board per spec:
+ * - 280px columns (not Trello-style thick)
+ * - 80-100px card height
+ * - Counter + potential sum in header
+ * - Drag-and-drop via @hello-pangea/dnd
+ * - Drawer on card click
+ */
+export function KanbanBoard({ searchFilter = '' }: { searchFilter?: string }) {
   const qc = useQueryClient()
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
@@ -120,27 +128,17 @@ export function KanbanBoard() {
               <div
                 key={col.stage}
                 className={cn(
-                  'flex flex-col rounded-xl border border-border/70 bg-card',
-                  'min-w-[286px] w-[286px] shrink-0',
-                  meta.columnSurface,
-                  'border-l-2',
-                  meta.borderL
+                  'flex flex-col rounded-lg border border-border bg-card',
+                  'min-w-[280px] w-[280px] shrink-0'
                 )}
               >
-                {/* Column header */}
-                <div className="flex items-center justify-between px-3 py-2 border-b border-border/60">
+                {/* Column header per spec */}
+                <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
                   <div className="flex items-center gap-2">
-                    <span className={cn('h-2 w-2 rounded-full', meta.accentDot)} />
-                    <span className={cn('text-[12px] font-medium', meta.accentText)}>
+                    <span className="text-sm font-medium text-foreground">
                       {meta.label}
                     </span>
-                    <span
-                      className={cn(
-                        'text-[11px] font-semibold px-1.5 py-0.5 rounded-md border leading-none',
-                        meta.pillBgBorder,
-                        'text-foreground/75'
-                      )}
-                    >
+                    <span className="text-xs text-muted-foreground">
                       {col.count}
                     </span>
                   </div>
@@ -153,7 +151,7 @@ export function KanbanBoard() {
                       setCreateOpen(true)
                     }}
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-3.5 w-3.5" />
                   </Button>
                 </div>
 
@@ -164,8 +162,8 @@ export function KanbanBoard() {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={cn(
-                        'flex-1 px-2 pb-2 pt-2 space-y-2 min-h-[100px] transition-colors rounded-b-xl',
-                        snapshot.isDraggingOver && 'bg-primary/5 dark:bg-primary/10'
+                        'flex-1 px-2 pb-2 pt-2 space-y-2 min-h-[100px] transition-colors duration-150 rounded-b-lg',
+                        snapshot.isDraggingOver && 'bg-foreground/[0.03]'
                       )}
                     >
                       {col.leads.map((lead, index) => (
