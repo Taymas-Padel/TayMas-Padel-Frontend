@@ -6,22 +6,22 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
-    allowedHosts: ['3ea1-37-151-151-73.ngrok-free.app'],
+    allowedHosts: ['taymaspadel.newlevelhub.kz'],
     proxy: {
       '/api': {
-        target: 'https://213.155.23.227',
+        target: 'https://taymaspadel.newlevelhub.kz',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
       '/media': {
-        target: 'https://213.155.23.227',
+        target: 'https://taymaspadel.newlevelhub.kz',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
       '/static': {
-        target: 'https://213.155.23.227',
+        target: 'https://taymaspadel.newlevelhub.kz',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
     },
   },
