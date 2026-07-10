@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit2, Trash2, Loader2, ImagePlus, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Loader2, ImagePlus, X, LayoutGrid, List, ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -22,6 +22,7 @@ import { formatMoney } from '@/utils/format'
 import { parseApiError } from '@/utils/error'
 import type { Court, CourtType, PlayFormat, CourtPriceSlot } from '@/types/court'
 import { resolveMediaUrl } from '@/utils/media'
+import { cn } from '@/utils/cn'
 
 const COURT_TYPE_LABELS: Record<CourtType, string> = {
   INDOOR: 'Крытый',
@@ -46,6 +47,48 @@ const schema = z.object({
 })
 
 type FormValues = z.infer<typeof schema>
+
+type GalleryItem = Court['gallery'][number]
+
+function extractGalleryImageUrl(item: GalleryItem | Record<string, unknown>): string | null {
+  if (typeof item === 'string') return item
+  if (item && typeof item === 'object') {
+    const obj = item as Record<string, unknown>
+    for (const key of ['image', 'image_url', 'url', 'file', 'photo'] as const) {
+      const val = obj[key]
+      if (typeof val === 'string' && val) return val
+    }
+  }
+  return null
+}
+
+function getCourtImages(court: Court): string[] {
+  const images: string[] = []
+  if (court.image) {
+    const url = resolveMediaUrl(court.image)
+    if (url) images.push(url)
+  }
+  if (court.gallery?.length) {
+    for (const item of court.gallery) {
+      const raw = extractGalleryImageUrl(item)
+      if (raw) {
+        const url = resolveMediaUrl(raw)
+        if (url && !images.includes(url)) images.push(url)
+      }
+    }
+  }
+  return images
+}
+
+function formatPriceSlot(s: CourtPriceSlot) {
+  const end = s.end_time === '00:00:00' || s.end_time === '00:00' ? '00:00' : s.end_time.slice(0, 5)
+  return (
+    <p className="text-xs text-muted-foreground whitespace-nowrap">
+      {s.start_time.slice(0, 5)}–{end}{' '}
+      <span className="font-medium text-foreground">{formatMoney(s.price_per_hour)}</span>
+    </p>
+  )
+}
 
 interface CourtFormDialogProps {
   court: Court | null
@@ -397,6 +440,19 @@ export function CourtsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editCourt, setEditCourt] = useState<Court | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards')
+  const [courtImageIndex, setCourtImageIndex] = useState<Record<string, number>>({})
+
+  function navigateCourtImage(courtId: number, direction: 'prev' | 'next', total: number) {
+    setCourtImageIndex((prev) => {
+      const key = String(courtId)
+      const current = prev[key] ?? 0
+      const next = direction === 'next'
+        ? (current + 1) % total
+        : (current - 1 + total) % total
+      return { ...prev, [key]: next }
+    })
+  }
 
   const { data: courts = [], isLoading } = useQuery({
     queryKey: ['courts-manage'],
@@ -427,10 +483,181 @@ export function CourtsPage() {
           }
         />
 
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm text-muted-foreground">
+            Вид отображения
+          </div>
+
+          <div className="flex gap-1 rounded-lg bg-muted p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode('cards')}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                viewMode === 'cards'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Карточки
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                viewMode === 'list'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <List className="h-4 w-4" />
+              Список
+            </button>
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
+        ) : viewMode === 'cards' ? (
+          courts.length === 0 ? (
+            <div className="rounded-lg border py-8 text-center text-sm text-muted-foreground">
+              Нет кортов
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {courts.map((c) => {
+                const images = getCourtImages(c)
+                const activeIndex = courtImageIndex[String(c.id)] ?? 0
+                const safeIndex = images.length > 0 ? activeIndex % images.length : 0
+
+                return (
+                  <article
+                    key={c.id}
+                    className="flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div className="relative aspect-[4/3] w-full overflow-hidden border-b bg-muted">
+                      {images.length > 0 ? (
+                        <>
+                          {images.map((src, idx) => (
+                            <img
+                              key={idx}
+                              src={src}
+                              alt={c.name}
+                              className={cn(
+                                'absolute inset-0 h-full w-full object-cover transition-opacity duration-300',
+                                idx === safeIndex ? 'opacity-100' : 'opacity-0'
+                              )}
+                            />
+                          ))}
+
+                          {images.length > 1 && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => navigateCourtImage(c.id, 'prev', images.length)}
+                                className="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border bg-background/90 text-foreground shadow-sm transition-colors hover:bg-background"
+                                aria-label="Предыдущее фото"
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => navigateCourtImage(c.id, 'next', images.length)}
+                                className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border bg-background/90 text-foreground shadow-sm transition-colors hover:bg-background"
+                                aria-label="Следующее фото"
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </button>
+
+                              <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+                                {images.map((_, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => setCourtImageIndex((prev) => ({ ...prev, [String(c.id)]: idx }))}
+                                    className={cn(
+                                      'h-1.5 rounded-full transition-all duration-300',
+                                      idx === safeIndex
+                                        ? 'w-4 bg-background'
+                                        : 'w-1.5 bg-background/50 hover:bg-background/80'
+                                    )}
+                                    aria-label={`Фото ${idx + 1}`}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-4 text-center text-sm text-muted-foreground">
+                          <ImageIcon className="h-8 w-8 opacity-60" />
+                          Нет изображения
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-1 flex-col p-4">
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <h3 className="text-base font-semibold leading-tight text-foreground">
+                            {c.name}
+                          </h3>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {COURT_TYPE_LABELS[c.court_type]}
+                          </p>
+                        </div>
+
+                        <Badge variant="outline" className="text-xs">
+                          {PLAY_FORMAT_LABELS[c.play_format] ?? c.play_format}
+                        </Badge>
+
+                        <div>
+                          {c.price_slots?.length > 0 ? (
+                            <div className="space-y-0.5">
+                              {c.price_slots.map((s, i) => (
+                                <div key={i}>{formatPriceSlot(s)}</div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-lg font-bold text-foreground">
+                              {formatMoney(c.price_per_hour)}
+                            </p>
+                          )}
+                        </div>
+
+                        <ActiveBadge isActive={c.is_active} />
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-end gap-1 border-t pt-3">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => { setEditCourt(c); setFormOpen(true) }}
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          onClick={() => setDeleteId(c.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )
         ) : (
           <div className="border rounded-xl overflow-hidden bg-card">
             <Table>
@@ -466,15 +693,9 @@ export function CourtsPage() {
                     <TableCell>
                       {c.price_slots?.length > 0 ? (
                         <div className="space-y-0.5">
-                          {c.price_slots.map((s, i) => {
-                            const end = s.end_time === '00:00:00' || s.end_time === '00:00' ? '00:00' : s.end_time.slice(0, 5)
-                            return (
-                              <p key={i} className="text-xs text-muted-foreground whitespace-nowrap">
-                                {s.start_time.slice(0, 5)}–{end}{' '}
-                                <span className="font-medium text-foreground">{formatMoney(s.price_per_hour)}</span>
-                              </p>
-                            )
-                          })}
+                          {c.price_slots.map((s, i) => (
+                            <div key={i}>{formatPriceSlot(s)}</div>
+                          ))}
                         </div>
                       ) : (
                         formatMoney(c.price_per_hour)
