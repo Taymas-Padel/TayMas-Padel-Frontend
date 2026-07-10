@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit2, Trash2, Loader2, ImagePlus, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Loader2, ImagePlus, X, LayoutGrid, List } from 'lucide-react'
 import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -241,6 +241,7 @@ export function ServicesPage() {
   const [editService, setEditService] = useState<Service | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [groupFilter, setGroupFilter] = useState<ServiceGroup | 'ALL'>('ALL')
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards')
 
   const { data: services = [], isLoading } = useQuery({
     queryKey: ['services-manage'],
@@ -296,13 +297,138 @@ export function ServicesPage() {
             </button>
           ))}
         </div>
+<div className="flex items-center justify-between gap-3">
+  <div className="text-sm text-muted-foreground">
+    Вид отображения
+  </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+  <div className="flex gap-1 rounded-lg bg-muted p-1">
+    <button
+      type="button"
+      onClick={() => setViewMode('cards')}
+      className={cn(
+        'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+        viewMode === 'cards'
+          ? 'bg-background text-foreground shadow-sm'
+          : 'text-muted-foreground hover:text-foreground'
+      )}
+    >
+      <LayoutGrid className="h-4 w-4" />
+      Карточки
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setViewMode('list')}
+      className={cn(
+        'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+        viewMode === 'list'
+          ? 'bg-background text-foreground shadow-sm'
+          : 'text-muted-foreground hover:text-foreground'
+      )}
+    >
+      <List className="h-4 w-4" />
+      Список
+    </button>
+  </div>
+</div>
+
+{isLoading ? (
+  <div className="flex justify-center py-12">
+    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+  </div>
+) : viewMode === 'cards' ? (
+  filtered.length === 0 ? (
+    <div className="rounded-lg border py-8 text-center text-sm text-muted-foreground">
+      Нет услуг в этой категории
+    </div>
+  ) : (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {filtered.map((s) => (
+        <article
+          key={s.id}
+          className="flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="aspect-[4/3] w-full overflow-hidden border-b bg-muted">
+            {s.image ? (
+              <img
+                src={resolveMediaUrl(s.image)}
+                alt={s.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                Нет изображения
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="border rounded-lg overflow-hidden">
+
+          <div className="flex flex-1 flex-col p-4">
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="text-base font-semibold leading-tight text-foreground">
+                  {s.name}
+                </h3>
+
+                {s.description ? (
+                  <p className="mt-1 text-sm leading-snug text-muted-foreground">
+                    {s.description}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Без описания
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className="text-xs">
+                  {GROUP_LABELS[s.group]}
+                </Badge>
+
+                <Badge variant="secondary" className="text-xs">
+                  {CATEGORY_LABELS[s.category]}
+                </Badge>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-lg font-bold text-foreground">
+                  {formatMoney(s.price)}
+                </p>
+
+                <ActiveBadge isActive={s.is_active} />
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-1 border-t pt-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  setEditService(s)
+                  setFormOpen(true)
+                }}
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive"
+                onClick={() => setDeleteId(s.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  )
+) : (
+  <div className="border rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
