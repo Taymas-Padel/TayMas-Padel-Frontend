@@ -117,11 +117,11 @@ export function ScheduleGrid({ courts, date, filterCourts, filterCoach, filterSt
 
   return (
     <>
-      <div className="overflow-auto border rounded-lg">
+      <div className="overflow-x-auto overflow-y-auto border rounded-lg max-w-full">
         <div
-          className="grid"
+          className="grid min-w-[320px]"
           style={{
-            gridTemplateColumns: `64px repeat(${visibleCourts.length}, minmax(140px, 1fr))`,
+            gridTemplateColumns: `56px repeat(${visibleCourts.length}, minmax(120px, 1fr))`,
           }}
         >
           {/* Header */}

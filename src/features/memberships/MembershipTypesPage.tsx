@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { ActiveBadge } from '@/components/shared/StatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { ViewModeToggle, type ViewMode } from '@/components/shared/ViewModeToggle'
 import {
   getMembershipTypesManage,
   createMembershipType,
@@ -181,7 +182,7 @@ function TypeFormDialog({ type, open, onClose }: TypeFormDialogProps) {
             {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Тип услуги *</Label>
               <Select
@@ -205,7 +206,7 @@ function TypeFormDialog({ type, open, onClose }: TypeFormDialogProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Дней действия *</Label>
               <Input {...register('days_valid')} type="number" placeholder="30" />
@@ -221,7 +222,7 @@ function TypeFormDialog({ type, open, onClose }: TypeFormDialogProps) {
           </div>
 
           {hasHours && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Приоритетное время с</Label>
                 <Input {...register('priority_time_start')} type="time" />
@@ -240,7 +241,7 @@ function TypeFormDialog({ type, open, onClose }: TypeFormDialogProps) {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Мин. участников</Label>
               <Input {...register('min_participants')} type="number" min="1" placeholder="1" />
@@ -251,7 +252,7 @@ function TypeFormDialog({ type, open, onClose }: TypeFormDialogProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Скидка на корт (%)</Label>
               <Input {...register('discount_on_court')} type="number" min="0" max="100" placeholder="0" />
@@ -285,9 +286,9 @@ function TypeFormDialog({ type, open, onClose }: TypeFormDialogProps) {
             <Label>Активен</Label>
           </div>
 
-          <div className="flex gap-2 justify-end pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
-            <Button type="submit" disabled={mutation.isPending}>
+          <div className="flex gap-2 justify-end pt-2 flex-col-reverse sm:flex-row">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">Отмена</Button>
+            <Button type="submit" disabled={mutation.isPending} className="w-full sm:w-auto">
               {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Сохранить
             </Button>
@@ -303,6 +304,7 @@ export function MembershipTypesPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editType, setEditType] = useState<MembershipType | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
 
   const { data: types = [], isLoading } = useQuery({
     queryKey: ['membership-types-manage'],
@@ -333,12 +335,96 @@ export function MembershipTypesPage() {
           }
         />
 
+        <ViewModeToggle value={viewMode} onChange={setViewMode} />
+
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
+        ) : viewMode === 'cards' ? (
+          types.length === 0 ? (
+            <div className="rounded-lg border py-8 text-center text-sm text-muted-foreground">
+              Нет типов абонементов
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {types.map((t) => {
+                const volume =
+                  t.total_hours && Number(t.total_hours) > 0
+                    ? `${t.total_hours} ч`
+                    : t.total_visits > 0
+                      ? `${t.total_visits} вис.`
+                      : '—'
+
+                return (
+                  <article
+                    key={t.id}
+                    className="flex flex-col rounded-xl border bg-card text-card-foreground p-4 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-2">
+                        <h3 className="text-base font-semibold leading-tight break-words">
+                          {t.name}
+                        </h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge variant="outline" className="text-xs">
+                            {t.service_type_display || SERVICE_TYPE_LABELS[t.service_type]}
+                          </Badge>
+                          {t.includes_coach && (
+                            <Badge variant="secondary" className="text-xs">Тренер</Badge>
+                          )}
+                          <ActiveBadge isActive={t.is_active} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="mt-4 text-xl font-bold tracking-tight">{formatMoney(t.price)}</p>
+
+                    <div className="mt-3 space-y-1.5 text-sm">
+                      <p className="text-muted-foreground">
+                        Срок: <span className="text-foreground font-medium">{t.days_valid} д.</span>
+                      </p>
+                      <p className="text-muted-foreground">
+                        Объём: <span className="text-foreground font-medium">{volume}</span>
+                      </p>
+                      {t.description && (
+                        <p className="text-muted-foreground line-clamp-2">{t.description}</p>
+                      )}
+                      {t.max_quantity != null && (
+                        <p className="text-muted-foreground">
+                          Лимит:{' '}
+                          <span className={t.remaining_quantity === 0 ? 'text-destructive font-medium' : 'text-foreground font-medium'}>
+                            {t.remaining_quantity ?? t.max_quantity - t.issued_count}/{t.max_quantity}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mt-auto flex items-center justify-end gap-2 border-t pt-3 mt-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 sm:h-8 sm:w-8"
+                        onClick={() => { setEditType(t); setFormOpen(true) }}
+                      >
+                        <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 sm:h-8 sm:w-8 text-destructive"
+                        onClick={() => setDeleteId(t.id)}
+                      >
+                        <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                      </Button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )
         ) : (
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

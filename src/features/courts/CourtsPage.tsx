@@ -222,7 +222,7 @@ function CourtFormDialog({ court, open, onClose }: CourtFormDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{court ? 'Редактировать корт' : 'Новый корт'}</DialogTitle>
         </DialogHeader>
@@ -233,7 +233,7 @@ function CourtFormDialog({ court, open, onClose }: CourtFormDialogProps) {
             {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Тип корта *</Label>
               <Select
@@ -292,14 +292,14 @@ function CourtFormDialog({ court, open, onClose }: CourtFormDialogProps) {
               </p>
             ) : (
               <div className="space-y-2">
-                <div className="grid grid-cols-[1fr_1fr_1fr_28px] gap-2 px-1">
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_28px] gap-2 px-1">
                   <span className="text-xs text-muted-foreground">С</span>
                   <span className="text-xs text-muted-foreground">До <span className="opacity-60">(00:00=полночь)</span></span>
                   <span className="text-xs text-muted-foreground">₸/час</span>
                   <span />
                 </div>
                 {priceSlots.map((slot, idx) => (
-                  <div key={idx} className="grid grid-cols-[1fr_1fr_1fr_28px] gap-2 items-center">
+                  <div key={idx} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_28px] gap-2 items-center">
                     <Input
                       type="time"
                       value={slot.start_time}
@@ -382,9 +382,9 @@ function CourtFormDialog({ court, open, onClose }: CourtFormDialogProps) {
             <Label>Активен</Label>
           </div>
 
-          <div className="flex gap-2 justify-end pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>Отмена</Button>
-            <Button type="submit" disabled={mutation.isPending}>
+          <div className="flex gap-2 justify-end pt-2 flex-col-reverse sm:flex-row">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">Отмена</Button>
+            <Button type="submit" disabled={mutation.isPending} className="w-full sm:w-auto">
               {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Сохранить
             </Button>
@@ -483,17 +483,17 @@ export function CourtsPage() {
           }
         />
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-muted-foreground">
             Вид отображения
           </div>
 
-          <div className="flex gap-1 rounded-lg bg-muted p-1">
+          <div className="flex w-full sm:w-auto gap-1 rounded-lg bg-muted p-1">
             <button
               type="button"
               onClick={() => setViewMode('cards')}
               className={cn(
-                'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                'inline-flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-md px-3 py-2 sm:py-1.5 text-sm font-medium transition-colors min-h-10 sm:min-h-0',
                 viewMode === 'cards'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -507,7 +507,7 @@ export function CourtsPage() {
               type="button"
               onClick={() => setViewMode('list')}
               className={cn(
-                'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                'inline-flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-md px-3 py-2 sm:py-1.5 text-sm font-medium transition-colors min-h-10 sm:min-h-0',
                 viewMode === 'list'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -634,22 +634,22 @@ export function CourtsPage() {
                         <ActiveBadge isActive={c.is_active} />
                       </div>
 
-                      <div className="mt-4 flex items-center justify-end gap-1 border-t pt-3">
+                      <div className="mt-4 flex items-center justify-end gap-2 border-t pt-3">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-10 w-10 sm:h-8 sm:w-8"
                           onClick={() => { setEditCourt(c); setFormOpen(true) }}
                         >
-                          <Edit2 className="h-3.5 w-3.5" />
+                          <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive"
+                          className="h-10 w-10 sm:h-8 sm:w-8 text-destructive"
                           onClick={() => setDeleteId(c.id)}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                         </Button>
                       </div>
                     </div>
@@ -659,7 +659,7 @@ export function CourtsPage() {
             </div>
           )
         ) : (
-          <div className="border rounded-xl overflow-hidden bg-card">
+          <div className="border rounded-xl overflow-x-auto bg-card">
             <Table>
               <TableHeader>
                 <TableRow>

@@ -16,8 +16,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { ViewModeToggle, type ViewMode } from '@/components/shared/ViewModeToggle'
 import { getNews, createNews, updateNews, deleteNews } from '@/api/news'
 import { parseApiError } from '@/utils/error'
+import { resolveMediaUrl } from '@/utils/media'
 import type { NewsItem } from '@/types/court'
 
 type NewsCategory = 'NEWS' | 'EVENT' | 'PROMO' | 'ANNOUNCEMENT'
@@ -157,6 +159,7 @@ export function NewsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editNews, setEditNews] = useState<NewsItem | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
 
   const { data: newsList = [], isLoading } = useQuery({
     queryKey: ['news'],
@@ -187,12 +190,83 @@ export function NewsPage() {
           }
         />
 
+        <ViewModeToggle value={viewMode} onChange={setViewMode} />
+
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
+        ) : viewMode === 'cards' ? (
+          newsList.length === 0 ? (
+            <div className="rounded-lg border py-8 text-center text-sm text-muted-foreground">
+              Нет публикаций
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {newsList.map((n) => {
+                const imageUrl = resolveMediaUrl(n.image_url)
+                return (
+                  <article
+                    key={n.id}
+                    className="flex flex-col rounded-xl border bg-card text-card-foreground p-4 shadow-sm"
+                  >
+                    <div className="flex items-start gap-3">
+                      {imageUrl && (
+                        <img
+                          src={imageUrl}
+                          alt=""
+                          className="h-12 w-12 rounded-md object-cover border shrink-0"
+                        />
+                      )}
+                      <div className="min-w-0 space-y-2 flex-1">
+                        <h3 className="text-base font-semibold leading-tight break-words">
+                          {n.is_pinned && <Pin className="inline h-3.5 w-3.5 text-primary mr-1.5 -mt-0.5" />}
+                          {n.title}
+                        </h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge variant={CATEGORY_VARIANTS[n.category]} className="text-xs">
+                            {CATEGORY_LABELS[n.category]}
+                          </Badge>
+                          {n.is_pinned && (
+                            <Badge variant="outline" className="text-xs">Закреплено</Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="mt-3 text-sm text-muted-foreground line-clamp-3">
+                      {n.content}
+                    </p>
+
+                    <p className="mt-3 text-sm font-medium text-foreground">
+                      {n.created_at_formatted}
+                    </p>
+
+                    <div className="mt-auto flex items-center justify-end gap-2 border-t pt-3 mt-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 sm:h-8 sm:w-8"
+                        onClick={() => { setEditNews(n); setFormOpen(true) }}
+                      >
+                        <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 sm:h-8 sm:w-8 text-destructive"
+                        onClick={() => setDeleteId(n.id)}
+                      >
+                        <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                      </Button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )
         ) : (
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

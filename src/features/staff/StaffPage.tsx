@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ActiveBadge } from '@/components/shared/StatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { ViewModeToggle, type ViewMode } from '@/components/shared/ViewModeToggle'
 import {
   getStaff, createStaff, updateStaff, setStaffPassword,
   activateStaff, deactivateStaff, deleteStaff,
@@ -398,6 +399,7 @@ export function StaffPage() {
   const [editStaff, setEditStaff] = useState<StaffMember | null>(null)
   const [pwStaff, setPwStaff] = useState<StaffMember | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
 
   const { data: staff = [], isLoading } = useQuery({
     queryKey: ['staff'],
@@ -471,7 +473,7 @@ export function StaffPage() {
         </div>
 
         {/* Search */}
-        <div className="relative max-w-sm">
+        <div className="relative max-w-sm w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9"
@@ -481,12 +483,109 @@ export function StaffPage() {
           />
         </div>
 
+        <ViewModeToggle value={viewMode} onChange={setViewMode} />
+
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-lg border py-8 text-center text-sm text-muted-foreground">
+            Сотрудники не найдены
+          </div>
+        ) : viewMode === 'cards' ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {filtered.map((member) => (
+              <article
+                key={member.id}
+                className={cn(
+                  'flex flex-col rounded-xl border bg-card text-card-foreground p-4 shadow-sm',
+                  !member.is_active && 'opacity-70'
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-10 w-10 shrink-0">
+                    <AvatarImage src={resolveMediaUrl(member.avatar)} />
+                    <AvatarFallback className="text-xs">
+                      {getInitials(member.first_name, member.last_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 space-y-2 flex-1">
+                    <h3 className="text-base font-semibold leading-tight break-words">
+                      {member.full_name}
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge variant={ROLE_VARIANTS[member.role]} className="text-xs">
+                        {ROLE_LABELS[member.role]}
+                      </Badge>
+                      <ActiveBadge isActive={member.is_active} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-1.5 text-sm">
+                  <p className="text-muted-foreground break-all">
+                    Тел.: <span className="text-foreground font-medium">{member.phone_number}</span>
+                  </p>
+                  {member.email && (
+                    <p className="text-muted-foreground break-all">
+                      Email: <span className="text-foreground font-medium">{member.email}</span>
+                    </p>
+                  )}
+                  <p className="text-muted-foreground">
+                    Логин: <span className="text-foreground font-mono font-medium">{member.username}</span>
+                  </p>
+                  {(member.role === 'COACH_PADEL' || member.role === 'COACH_FITNESS') && Number(member.price_per_hour) > 0 && (
+                    <p className="pt-1 text-base font-bold tracking-tight">
+                      {member.coach_price_1_2 && member.coach_price_3_4
+                        ? `${formatMoney(member.coach_price_1_2)} / ${formatMoney(member.coach_price_3_4)}`
+                        : `${formatMoney(member.price_per_hour)}/ч`}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-auto flex items-center justify-end gap-1 border-t pt-3 mt-4">
+                  <Button
+                    variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8"
+                    title="Редактировать"
+                    onClick={() => { setEditStaff(member); setFormOpen(true) }}
+                  >
+                    <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8"
+                    title="Сменить пароль"
+                    onClick={() => setPwStaff(member)}
+                  >
+                    <KeyRound className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon"
+                    className={cn(
+                      'h-10 w-10 sm:h-8 sm:w-8',
+                      member.is_active ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700'
+                    )}
+                    title={member.is_active ? 'Деактивировать' : 'Активировать'}
+                    onClick={() => toggleActiveMutation.mutate({ id: member.id, active: member.is_active })}
+                    disabled={toggleActiveMutation.isPending}
+                  >
+                    {member.is_active
+                      ? <UserX className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                      : <UserCheck className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8 text-destructive"
+                    title="Удалить"
+                    onClick={() => setDeleteId(member.id)}
+                  >
+                    <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  </Button>
+                </div>
+              </article>
+            ))}
+          </div>
         ) : (
-          <div className="border rounded-xl overflow-hidden bg-card">
+          <div className="border rounded-xl overflow-x-auto bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -500,14 +599,7 @@ export function StaffPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
-                      Сотрудники не найдены
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((member) => (
+                {filtered.map((member) => (
                     <TableRow key={member.id} className={cn(!member.is_active && 'opacity-60')}>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -586,8 +678,7 @@ export function StaffPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
+                  ))}
               </TableBody>
             </Table>
           </div>

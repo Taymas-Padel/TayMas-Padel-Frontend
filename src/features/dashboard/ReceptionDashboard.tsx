@@ -210,27 +210,27 @@ export function ReceptionDashboard() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Быстрые действия</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={() => navigate(ROUTES.BOOKINGS_SCHEDULE)}>
+        <CardContent className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
+          <Button size="sm" className="w-full sm:w-auto justify-center" onClick={() => navigate(ROUTES.BOOKINGS_SCHEDULE)}>
             <TicketPlus className="h-4 w-4" />
             Новая бронь
           </Button>
-          <Button size="sm" variant="outline" onClick={() => navigate(ROUTES.CLIENTS)}>
+          <Button size="sm" variant="outline" className="w-full sm:w-auto justify-center" onClick={() => navigate(ROUTES.CLIENTS)}>
             <UserPlus className="h-4 w-4" />
             Новый клиент
           </Button>
-          <Button size="sm" variant="outline" onClick={() => navigate(ROUTES.MEMBERSHIPS_ISSUE)}>
+          <Button size="sm" variant="outline" className="w-full sm:w-auto justify-center" onClick={() => navigate(ROUTES.MEMBERSHIPS_ISSUE)}>
             <CreditCard className="h-4 w-4" />
             Выдать абонемент
           </Button>
-          <Button size="sm" variant="outline" onClick={() => navigate(ROUTES.BOOKINGS)}>
+          <Button size="sm" variant="outline" className="w-full sm:w-auto justify-center" onClick={() => navigate(ROUTES.BOOKINGS)}>
             <CalendarCheck className="h-4 w-4" />
             Все брони
           </Button>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
           title="Броней сегодня"
           value={data?.bookings_today ?? 0}
