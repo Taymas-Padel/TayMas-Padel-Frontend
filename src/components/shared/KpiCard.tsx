@@ -57,11 +57,11 @@ export function KpiCard({
         variantStyles[variant]
       )}
     >
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
+        <CardContent className="p-3.5 sm:p-5">
+        <div className="flex items-start justify-between gap-2">
           <div className="space-y-1 min-w-0">
             <p className="brand-label text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold tracking-tight truncate mt-1">{value}</p>
+            <p className="text-xl sm:text-2xl font-bold tracking-tight break-words mt-1">{value}</p>
             {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </div>
           {icon && (
