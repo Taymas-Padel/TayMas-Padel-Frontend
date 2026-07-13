@@ -14,8 +14,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { ViewModeToggle, type ViewMode } from '@/components/shared/ViewModeToggle'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { QrStatusBadge } from '@/components/shared/StatusBadge'
+import { QrStatusBadge, ActiveBadge } from '@/components/shared/StatusBadge'
 import { getClientDetail, getClients, mobileLogin, searchByPhone, sendMobileCode, userAction } from '@/api/clients'
 import { useDebounce } from '@/hooks/useDebounce'
 import { getInitials } from '@/utils/format'
@@ -47,6 +48,7 @@ export function ClientsPage() {
   const [newUserId, setNewUserId] = useState<number | null>(null)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
   const debouncedSearch = useDebounce(search, 400)
 
   const { data: clients = [], isLoading } = useQuery({
@@ -208,8 +210,8 @@ export function ClientsPage() {
         )}
       />
 
-      <div className="surface-elevated rounded-xl p-3 flex gap-3 items-center flex-wrap">
-        <div className="relative flex-1 max-w-sm min-w-[240px]">
+      <div className="surface-elevated rounded-xl p-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+        <div className="relative w-full sm:flex-1 sm:max-w-sm min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Поиск по имени, телефону..."
@@ -219,7 +221,7 @@ export function ClientsPage() {
           />
         </div>
         <Select value={role} onValueChange={setRole}>
-          <SelectTrigger className="w-44 h-10">
+          <SelectTrigger className="w-full sm:w-44 h-10">
             <SelectValue placeholder="Все роли" />
           </SelectTrigger>
           <SelectContent>
@@ -230,7 +232,7 @@ export function ClientsPage() {
           </SelectContent>
         </Select>
         <Select value={activeFilter} onValueChange={(v) => setActiveFilter(v as typeof activeFilter)}>
-          <SelectTrigger className="w-44 h-10">
+          <SelectTrigger className="w-full sm:w-44 h-10">
             <SelectValue placeholder="Статус аккаунта" />
           </SelectTrigger>
           <SelectContent>
@@ -240,7 +242,7 @@ export function ClientsPage() {
           </SelectContent>
         </Select>
         <Select value={qrFilter} onValueChange={(v) => setQrFilter(v as typeof qrFilter)}>
-          <SelectTrigger className="w-40 h-10">
+          <SelectTrigger className="w-full sm:w-40 h-10">
             <SelectValue placeholder="QR статус" />
           </SelectTrigger>
           <SelectContent>
@@ -250,7 +252,7 @@ export function ClientsPage() {
           </SelectContent>
         </Select>
         <Select value={profileFilter} onValueChange={(v) => setProfileFilter(v as typeof profileFilter)}>
-          <SelectTrigger className="w-44 h-10">
+          <SelectTrigger className="w-full sm:w-44 h-10">
             <SelectValue placeholder="Профиль" />
           </SelectTrigger>
           <SelectContent>
@@ -259,7 +261,7 @@ export function ClientsPage() {
             <SelectItem value="incomplete">Профиль не заполнен</SelectItem>
           </SelectContent>
         </Select>
-        <Button type="button" variant="outline" size="sm" className="h-10" onClick={resetFilters}>
+        <Button type="button" variant="outline" size="sm" className="h-10 w-full sm:w-auto" onClick={resetFilters}>
           <RotateCcw className="h-4 w-4" />
           Сбросить
         </Button>
@@ -272,22 +274,85 @@ export function ClientsPage() {
         <Badge variant="secondary">Незаполненный профиль: {counters.incompleteProfiles}</Badge>
       </div>
 
-      <Card className="surface-elevated rounded-xl">
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
-              ))}
-            </div>
-          ) : filteredClients.length === 0 ? (
-            <EmptyState
-              icon={<UserX className="h-10 w-10" />}
-              title="Клиенты не найдены"
-              description="Попробуйте изменить фильтры поиска"
-              className="py-16"
-            />
-          ) : (
+      <ViewModeToggle value={viewMode} onChange={setViewMode} />
+
+      {isLoading ? (
+        <div className="p-6 space-y-3 surface-elevated rounded-xl">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full" />
+          ))}
+        </div>
+      ) : filteredClients.length === 0 ? (
+        <EmptyState
+          icon={<UserX className="h-10 w-10" />}
+          title="Клиенты не найдены"
+          description="Попробуйте изменить фильтры поиска"
+          className="py-16"
+        />
+      ) : viewMode === 'cards' ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {filteredClients.map((client) => (
+            <article
+              key={client.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(ROUTES.CLIENT_DETAIL(client.id))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  navigate(ROUTES.CLIENT_DETAIL(client.id))
+                }
+              }}
+              className="flex flex-col rounded-xl border bg-card text-card-foreground p-4 shadow-sm cursor-pointer transition hover:bg-muted/30"
+            >
+              <div className="flex items-start gap-3">
+                <Avatar className="h-11 w-11 shrink-0">
+                  <AvatarImage src={resolveMediaUrl(client.avatar)} alt="" className="object-cover" />
+                  <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+                    {getInitials(client.first_name, client.last_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <h3 className="text-base font-semibold leading-tight break-words">
+                    {client.first_name} {client.last_name}
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge variant="outline" className="text-xs">
+                      {ROLE_LABELS[client.role] ?? client.role}
+                    </Badge>
+                    <ActiveBadge isActive={client.is_active !== false} />
+                    <QrStatusBadge isBlocked={client.is_qr_blocked} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-1.5 text-sm">
+                <p className="text-muted-foreground break-all">
+                  Тел.: <span className="text-foreground font-medium tabular-nums">{client.phone_number}</span>
+                </p>
+                <p className="text-muted-foreground">
+                  ELO: <span className="text-foreground font-medium tabular-nums">{client.rating_elo}</span>
+                </p>
+                <p className="text-muted-foreground">
+                  Регистрация:{' '}
+                  <span className="text-foreground font-medium">{formatDate(client.created_at)}</span>
+                </p>
+                {!client.is_profile_complete && (
+                  <p className="text-amber-700 dark:text-amber-300 text-sm font-medium">
+                    Профиль не заполнен
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-auto pt-3 mt-4 border-t">
+                <span className="text-sm font-medium text-foreground">Открыть карточку</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <Card className="surface-elevated rounded-xl overflow-hidden">
+          <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -341,9 +406,9 @@ export function ClientsPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <Dialog
         open={isAddOpen}
@@ -431,13 +496,14 @@ export function ClientsPage() {
             )}
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setIsAddOpen(false)}>
               Отмена
             </Button>
             {showNameStep && (
               <Button
                 type="button"
+                className="w-full sm:w-auto"
                 onClick={() => saveProfileMutation.mutate()}
                 disabled={saveProfileMutation.isPending || !firstName.trim() || !lastName.trim()}
               >

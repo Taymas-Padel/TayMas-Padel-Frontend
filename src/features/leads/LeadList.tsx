@@ -46,12 +46,12 @@ export function LeadList() {
   return (
     <>
       <div className="space-y-4">
-        <div className="surface-elevated rounded-xl p-3 flex gap-3 flex-wrap items-center">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="surface-elevated rounded-xl p-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="relative w-full sm:flex-1 sm:min-w-[200px] min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Поиск по имени, телефону..."
-              className="pl-9"
+              className="pl-9 h-10"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -60,7 +60,7 @@ export function LeadList() {
             value={stage || '_all'}
             onValueChange={(v) => setStage(v === '_all' ? '' : v as LeadStage)}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px] h-10">
               <SelectValue placeholder="Все стадии" />
             </SelectTrigger>
             <SelectContent>
@@ -70,7 +70,7 @@ export function LeadList() {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={() => setCreateOpen(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             Новый лид
           </Button>
@@ -83,7 +83,7 @@ export function LeadList() {
         ) : leads.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground">Лиды не найдены</p>
         ) : (
-          <div className="surface-elevated rounded-xl overflow-hidden">
+          <div className="surface-elevated rounded-xl overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

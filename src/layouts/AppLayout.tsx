@@ -29,7 +29,7 @@ export function AppLayout() {
       >
         <Header />
         <main className="flex-1 overflow-y-auto">
-          <div className="p-3 sm:p-4 md:p-6 max-w-[1680px] w-full mx-auto animate-in">
+          <div className="p-3 sm:p-4 md:p-6 max-w-[1680px] w-full min-w-0 mx-auto animate-in">
             <Outlet />
           </div>
         </main>

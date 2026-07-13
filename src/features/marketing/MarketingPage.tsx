@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { ActiveBadge } from '@/components/shared/StatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { ViewModeToggle, type ViewMode } from '@/components/shared/ViewModeToggle'
 import { getPromos, createPromo, updatePromo, deletePromo } from '@/api/marketing'
 import { formatDate } from '@/utils/date'
 import { formatMoney } from '@/utils/format'
@@ -184,6 +185,7 @@ export function MarketingPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editPromo, setEditPromo] = useState<MarketingPromo | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
 
   const { data: promos = [], isLoading } = useQuery({
     queryKey: ['promos'],
@@ -214,12 +216,90 @@ export function MarketingPage() {
           }
         />
 
+        <ViewModeToggle value={viewMode} onChange={setViewMode} />
+
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
+        ) : viewMode === 'cards' ? (
+          promos.length === 0 ? (
+            <div className="rounded-lg border py-8 text-center text-sm text-muted-foreground">
+              Нет акций
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {promos.map((p) => (
+                <article
+                  key={p.id}
+                  className="flex flex-col rounded-xl border bg-card text-card-foreground p-4 shadow-sm"
+                >
+                  <div className="space-y-2">
+                    <h3 className="text-base font-semibold leading-tight break-words">{p.title}</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      <ActiveBadge isActive={p.is_active} />
+                      <Badge variant="secondary" className="text-xs">
+                        {p.discount_type === 'PERCENT'
+                          ? `${p.discount_value}%`
+                          : formatMoney(p.discount_value)}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {p.promo_code ? (
+                    <p className="mt-4 font-mono text-lg font-bold tracking-wide break-all">
+                      {p.promo_code}
+                    </p>
+                  ) : (
+                    <p className="mt-4 text-lg font-bold tracking-tight">
+                      {p.discount_type === 'PERCENT'
+                        ? `−${p.discount_value}%`
+                        : formatMoney(p.discount_value)}
+                    </p>
+                  )}
+
+                  <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+                    <p>
+                      Тип:{' '}
+                      <span className="text-foreground font-medium">
+                        {p.discount_type === 'PERCENT' ? 'Процент' : 'Фиксированная'}
+                      </span>
+                    </p>
+                    <p>
+                      Период:{' '}
+                      <span className="text-foreground font-medium">
+                        {formatDate(p.start_date)} — {formatDate(p.end_date)}
+                      </span>
+                    </p>
+                    {p.description && (
+                      <p className="line-clamp-2">{p.description}</p>
+                    )}
+                  </div>
+
+                  <div className="mt-auto flex items-center justify-end gap-2 border-t pt-3 mt-4">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 sm:h-8 sm:w-8"
+                      onClick={() => { setEditPromo(p); setFormOpen(true) }}
+                    >
+                      <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 sm:h-8 sm:w-8 text-destructive"
+                      onClick={() => setDeleteId(p.id)}
+                    >
+                      <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                    </Button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )
         ) : (
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

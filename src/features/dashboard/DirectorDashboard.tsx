@@ -31,7 +31,7 @@ export function DirectorDashboard() {
         description={data?.period.month}
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
           title="Выручка сегодня"
           value={kpi ? formatMoney(kpi.today_revenue) : '—'}
@@ -59,7 +59,7 @@ export function DirectorDashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
           title="Загрузка сегодня"
           value={kpi?.occupancy_rate_today ?? '—'}
@@ -98,19 +98,21 @@ export function DirectorDashboard() {
                 const total = data.revenue_structure.reduce((s, i) => s + i.amount, 0)
                 const percent = total > 0 ? Math.round((item.amount / total) * 100) : 0
                 return (
-                  <div key={item.type} className="flex items-center gap-4">
-                    <div className="w-36 text-sm text-muted-foreground shrink-0 truncate">{item.label}</div>
-                    <div className="flex-1 bg-muted rounded-full h-2.5 overflow-hidden">
-                      <div
-                        className="bg-primary h-full rounded-full transition-all duration-500"
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                    <div className="w-28 text-sm font-semibold text-right shrink-0 tabular-nums">
-                      {formatMoney(item.amount)}
-                    </div>
-                    <div className="w-12 text-xs text-muted-foreground shrink-0 text-right tabular-nums">
-                      {percent}%
+                  <div key={item.type} className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4">
+                    <div className="sm:w-36 text-sm text-muted-foreground shrink-0 truncate">{item.label}</div>
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex-1 bg-muted rounded-full h-2.5 overflow-hidden min-w-0">
+                        <div
+                          className="bg-primary h-full rounded-full transition-all duration-500"
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                      <div className="text-sm font-semibold text-right shrink-0 tabular-nums whitespace-nowrap">
+                        {formatMoney(item.amount)}
+                      </div>
+                      <div className="w-10 text-xs text-muted-foreground shrink-0 text-right tabular-nums">
+                        {percent}%
+                      </div>
                     </div>
                   </div>
                 )
@@ -125,7 +127,7 @@ export function DirectorDashboard() {
         </Card>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <KpiCard
           title="Ожидают оплаты"
           value={kpi?.pending_payments ?? 0}

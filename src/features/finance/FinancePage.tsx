@@ -8,8 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { ViewModeToggle, type ViewMode } from '@/components/shared/ViewModeToggle'
 import { getTransactions, getFinanceSummary } from '@/api/finance'
 import { formatMoney } from '@/utils/format'
+import { Badge } from '@/components/ui/badge'
 
 type Period = 'today' | 'month' | 'all'
 
@@ -23,6 +25,7 @@ function TransactionTable() {
   const [date, setDate] = useState('')
   const [type, setType] = useState('_all')
   const [method, setMethod] = useState('_all')
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
 
   const { data: allTransactions = [], isLoading } = useQuery({
     queryKey: ['transactions', { date }],
@@ -64,15 +67,15 @@ function TransactionTable() {
 
   return (
     <div className="space-y-4">
-      <div className="surface-elevated rounded-xl p-3 flex gap-3 flex-wrap items-center">
+      <div className="surface-elevated rounded-xl p-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
         <Input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="w-[160px]"
+          className="w-full sm:w-[160px]"
         />
         <Select value={type} onValueChange={setType}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Все типы" />
           </SelectTrigger>
           <SelectContent>
@@ -82,7 +85,7 @@ function TransactionTable() {
           </SelectContent>
         </Select>
         <Select value={method} onValueChange={setMethod}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Все способы" />
           </SelectTrigger>
           <SelectContent>
@@ -92,11 +95,13 @@ function TransactionTable() {
           </SelectContent>
         </Select>
         {(date || type !== '_all' || method !== '_all') && (
-          <Button variant="ghost" size="sm" onClick={() => { setDate(''); setType('_all'); setMethod('_all') }}>
+          <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => { setDate(''); setType('_all'); setMethod('_all') }}>
             Сбросить
           </Button>
         )}
       </div>
+
+      <ViewModeToggle value={viewMode} onChange={setViewMode} />
 
       {isLoading ? (
         <div className="flex justify-center py-16">
@@ -104,8 +109,42 @@ function TransactionTable() {
         </div>
       ) : transactions.length === 0 ? (
         <p className="text-center py-16 text-muted-foreground text-sm">Транзакции не найдены</p>
+      ) : viewMode === 'cards' ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {transactions.map((t) => (
+            <article
+              key={t.id}
+              className="flex flex-col rounded-xl border bg-card text-card-foreground p-4 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1.5">
+                  <h3 className="text-base font-semibold leading-tight break-words">
+                    {t.transaction_type_label}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{t.created_at_formatted}</p>
+                </div>
+                <Badge variant="outline" className="shrink-0 text-xs">
+                  #{t.id}
+                </Badge>
+              </div>
+
+              <p className="mt-4 text-xl font-bold tracking-tight">{formatMoney(t.amount)}</p>
+
+              <div className="mt-3 space-y-1.5 text-sm">
+                <p className="text-muted-foreground">
+                  Оплата: <span className="text-foreground font-medium">{t.payment_method_label}</span>
+                </p>
+                {t.description && (
+                  <p className="text-muted-foreground line-clamp-3" title={t.description}>
+                    {t.description}
+                  </p>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
       ) : (
-        <div className="surface-elevated rounded-xl overflow-hidden">
+        <div className="surface-elevated rounded-xl overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

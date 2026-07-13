@@ -75,9 +75,9 @@ export function AuthLayout() {
       </div>
 
       {/* Right — login */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-background">
-        <div className="w-full max-w-[420px]">
-          <div className="lg:hidden mb-10 flex flex-col items-center gap-4 text-center">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 bg-background">
+        <div className="w-full max-w-[420px] min-w-0">
+          <div className="lg:hidden mb-8 sm:mb-10 flex flex-col items-center gap-4 text-center">
             <img
               src={BRAND_MARK_GREEN}
               alt=""

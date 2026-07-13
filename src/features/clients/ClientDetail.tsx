@@ -135,26 +135,26 @@ export function ClientDetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h2 className="text-2xl font-bold">{fullName(client.first_name, client.last_name)}</h2>
+        <h2 className="text-xl sm:text-2xl font-bold break-words min-w-0">{fullName(client.first_name, client.last_name)}</h2>
       </div>
 
       {/* Profile card */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-6">
-            <Avatar className="h-20 w-20">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
+            <Avatar className="h-16 w-16 sm:h-20 sm:w-20 shrink-0">
               <AvatarImage src={resolveMediaUrl(avatarSrc)} alt="" className="object-cover" />
               <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                 {getInitials(client.first_name, client.last_name)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 space-y-2">
+            <div className="flex-1 space-y-2 min-w-0">
               <div className="flex items-center gap-3 flex-wrap">
-                <h3 className="text-xl font-semibold">
+                <h3 className="text-lg sm:text-xl font-semibold break-words">
                   {fullName(client.first_name, client.last_name)}
                 </h3>
                 <Badge variant="outline">{client.role}</Badge>
@@ -165,16 +165,16 @@ export function ClientDetail() {
                 )}
                 <QrStatusBadge isBlocked={client.is_qr_blocked} />
               </div>
-              <p className="text-muted-foreground">{client.phone_number}</p>
-              <div className="flex gap-4 text-sm text-muted-foreground">
+              <p className="text-muted-foreground break-all">{client.phone_number}</p>
+              <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 text-sm text-muted-foreground">
                 <span>ELO: <strong className="text-foreground">{client.rating_elo}</strong></span>
                 <span>С нами с: <strong className="text-foreground">{formatDate(client.created_at)}</strong></span>
               </div>
             </div>
 
             {canEdit && (
-              <div className="flex flex-col gap-2">
-                <Button variant="outline" size="sm" onClick={openEdit}>
+              <div className="flex flex-col gap-2 w-full sm:w-auto">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={openEdit}>
                   <Edit2 className="h-4 w-4" />
                   Редактировать
                 </Button>
@@ -182,6 +182,7 @@ export function ClientDetail() {
                   <Button
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => actionMutation.mutate({ action: 'unblock_qr' })}
                     disabled={actionMutation.isPending}
                   >
@@ -194,6 +195,7 @@ export function ClientDetail() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() => actionMutation.mutate({ action: 'activate' })}
                       disabled={actionMutation.isPending}
                     >
@@ -204,7 +206,7 @@ export function ClientDetail() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-destructive"
+                      className="w-full sm:w-auto text-destructive"
                       onClick={() => actionMutation.mutate({ action: 'deactivate' })}
                       disabled={actionMutation.isPending}
                     >

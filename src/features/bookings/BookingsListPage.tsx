@@ -76,15 +76,15 @@ export function BookingsListPage() {
         }
       />
 
-      <div className="surface-elevated rounded-xl p-3 flex gap-3 flex-wrap items-center">
+      <div className="surface-elevated rounded-xl p-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
         <Input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="w-[160px]"
+          className="w-full sm:w-[160px]"
         />
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Все статусы" />
           </SelectTrigger>
           <SelectContent>
@@ -97,6 +97,7 @@ export function BookingsListPage() {
           <Button
             variant="ghost"
             size="sm"
+            className="w-full sm:w-auto"
             onClick={() => { setDate(''); setStatus('_all') }}
           >
             Сбросить
@@ -111,7 +112,7 @@ export function BookingsListPage() {
       ) : bookings.length === 0 ? (
         <p className="text-center py-16 text-muted-foreground text-sm">Бронирования не найдены</p>
       ) : (
-        <div className="surface-elevated rounded-xl overflow-hidden">
+        <div className="surface-elevated rounded-xl overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

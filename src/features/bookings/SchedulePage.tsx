@@ -204,7 +204,7 @@ export function SchedulePage() {
   }, [data, coaches])
 
   return (
-    <div className="space-y-4">
+      <div className="space-y-4 min-w-0">
       <PageHeader
         title="Расписание"
         description="Брони по кортам на выбранный день"
@@ -217,46 +217,46 @@ export function SchedulePage() {
       />
 
       {/* Date navigation + stats */}
-      <div className="surface-elevated rounded-xl p-3 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={prev}>
+      <div className="surface-elevated rounded-xl p-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" onClick={prev}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="h-10 rounded-md border border-input bg-background/85 px-3.5 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/65"
+            className="h-10 min-w-0 flex-1 sm:flex-none rounded-md border border-input bg-background/85 px-3.5 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/65"
           />
-          <Button variant="outline" size="icon" onClick={next}>
+          <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" onClick={next}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <span className="text-sm text-muted-foreground capitalize">
+          <span className="text-sm text-muted-foreground capitalize w-full sm:w-auto">
             {formatDate(date)}
           </span>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setDate(todayISO())}
-            className="text-xs"
+            className="text-xs h-9"
           >
             Сегодня
           </Button>
         </div>
 
-        <div className="h-5 w-px bg-border" />
+        <div className="hidden sm:block h-5 w-px bg-border" />
         <div className="flex items-center gap-1.5 flex-wrap">
-          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setQuickDate(1)}>
+          <Button variant="outline" size="sm" className="h-9 sm:h-8 text-xs" onClick={() => setQuickDate(1)}>
             Завтра
           </Button>
-          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setQuickDate(7)}>
+          <Button variant="outline" size="sm" className="h-9 sm:h-8 text-xs" onClick={() => setQuickDate(7)}>
             +7 дней
           </Button>
         </div>
 
         {/* Stats pills */}
         {stats && (
-          <div className="flex items-center gap-2 ml-auto flex-wrap">
+          <div className="flex items-center gap-2 sm:ml-auto flex-wrap">
             <span className="text-xs text-muted-foreground">Броней:</span>
             <Badge variant="outline" className="text-xs gap-1">
               Всего <strong>{stats.total}</strong>
@@ -265,7 +265,7 @@ export function SchedulePage() {
             {stats.confirmed > 0 && <Badge variant="success" className="text-xs">Подтверждено {stats.confirmed}</Badge>}
             {stats.completed > 0 && <Badge variant="info" className="text-xs">Завершено {stats.completed}</Badge>}
             {stats.canceled > 0 && <Badge variant="destructive" className="text-xs">Отменено {stats.canceled}</Badge>}
-            <div className="w-px h-4 bg-border mx-0.5" />
+            <div className="w-px h-4 bg-border mx-0.5 hidden sm:block" />
             <Badge variant="secondary" className="text-xs">Корты {stats.totalCourts}</Badge>
             {isTodaySelected && (
               <>
@@ -280,41 +280,43 @@ export function SchedulePage() {
 
       {/* Filter bar */}
       {data && (
-        <div className="surface-elevated rounded-xl flex flex-wrap items-center gap-3 p-3">
-          <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+        <div className="surface-elevated rounded-xl flex flex-col gap-3 p-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex items-start gap-2 min-w-0">
+            <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-2 sm:mt-0.5" />
 
-          {/* Status filter */}
-          <div className="flex items-center gap-1 flex-wrap">
-            {STATUS_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setFilterStatus(opt.value)}
-                className={cn(
-                  'px-2 py-0.5 rounded-full text-xs border font-medium transition-all',
-                  filterStatus === opt.value
-                    ? opt.value === 'ALL'
-                      ? 'bg-foreground text-background border-foreground'
-                      : cn(
-                          opt.tone === 'warning' && 'bg-amber-500/15 text-amber-900 border-amber-500/30',
-                          opt.tone === 'success' && 'bg-emerald-500/15 text-emerald-800 border-emerald-500/30',
-                          opt.tone === 'info' && 'bg-blue-500/15 text-blue-800 border-blue-500/30',
-                          opt.tone === 'destructive' && 'bg-red-500/15 text-red-800 border-red-500/30',
-                          'border opacity-100 ring-1 ring-offset-1 ring-foreground/30'
-                        )
-                    : 'bg-background text-muted-foreground border-border hover:border-foreground/30'
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
+            {/* Status filter */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setFilterStatus(opt.value)}
+                  className={cn(
+                    'px-2.5 py-1.5 sm:px-2 sm:py-0.5 rounded-full text-xs border font-medium transition-all min-h-8',
+                    filterStatus === opt.value
+                      ? opt.value === 'ALL'
+                        ? 'bg-foreground text-background border-foreground'
+                        : cn(
+                            opt.tone === 'warning' && 'bg-amber-500/15 text-amber-900 border-amber-500/30',
+                            opt.tone === 'success' && 'bg-emerald-500/15 text-emerald-800 border-emerald-500/30',
+                            opt.tone === 'info' && 'bg-blue-500/15 text-blue-800 border-blue-500/30',
+                            opt.tone === 'destructive' && 'bg-red-500/15 text-red-800 border-red-500/30',
+                            'border opacity-100 ring-1 ring-offset-1 ring-foreground/30'
+                          )
+                      : 'bg-background text-muted-foreground border-border hover:border-foreground/30'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="w-px h-5 bg-border" />
+          <div className="hidden sm:block w-px h-5 bg-border" />
 
           {/* Coach filter */}
           <Select value={filterCoach || '__all__'} onValueChange={(v) => setFilterCoach(v === '__all__' ? '' : v)}>
-            <SelectTrigger className="h-7 text-xs w-[180px]">
+            <SelectTrigger className="h-9 sm:h-7 text-xs w-full sm:w-[180px]">
               <SelectValue placeholder="Все тренеры" />
             </SelectTrigger>
             <SelectContent>
@@ -327,13 +329,13 @@ export function SchedulePage() {
             </SelectContent>
           </Select>
 
-          <div className="w-px h-5 bg-border" />
+          <div className="hidden sm:block w-px h-5 bg-border" />
 
           <Button
             type="button"
             variant={onlyFreeNow ? 'default' : 'outline'}
             size="sm"
-            className="h-7 text-xs"
+            className="h-9 sm:h-7 text-xs w-full sm:w-auto"
             disabled={!isTodaySelected}
             onClick={() => setOnlyFreeNow((v) => !v)}
             title={isTodaySelected ? 'Показать только свободные корты на текущее время' : 'Работает только для текущей даты'}
@@ -341,18 +343,18 @@ export function SchedulePage() {
             Только свободные сейчас
           </Button>
 
-          <div className="w-px h-5 bg-border" />
+          <div className="hidden sm:block w-px h-5 bg-border" />
 
           {/* Court filter chips */}
-          <div className="flex items-center gap-1 flex-wrap">
-            <span className="text-xs text-muted-foreground">Корты:</span>
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+            <span className="text-xs text-muted-foreground shrink-0">Корты:</span>
             {data.schedule.map((court) => (
               <button
                 key={court.court_id}
                 type="button"
                 onClick={() => toggleCourt(court.court_id)}
                 className={cn(
-                  'px-2 py-0.5 rounded-full text-xs border font-medium transition-all',
+                  'px-2.5 py-1.5 sm:px-2 sm:py-0.5 rounded-full text-xs border font-medium transition-all min-h-8',
                   filterCourts.includes(court.court_id)
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-background text-muted-foreground border-border hover:border-foreground/30'
@@ -366,11 +368,11 @@ export function SchedulePage() {
           {/* Clear filters */}
           {hasFilters && (
             <>
-              <div className="w-px h-5 bg-border" />
+              <div className="hidden sm:block w-px h-5 bg-border" />
               <button
                 type="button"
                 onClick={clearFilters}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors min-h-8"
               >
                 <X className="h-3 w-3" />
                 Сбросить
