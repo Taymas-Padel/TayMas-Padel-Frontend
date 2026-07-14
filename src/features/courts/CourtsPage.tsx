@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit2, Trash2, Loader2, ImagePlus, X, LayoutGrid, List, ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react'
+import { Plus, Edit2, Trash2, Loader2, ImagePlus, X, LayoutGrid, List, ChevronLeft, ChevronRight, ImageIcon, CalendarPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -17,7 +17,9 @@ import { Badge } from '@/components/ui/badge'
 import { ActiveBadge } from '@/components/shared/StatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { CreateBookingModal } from '@/features/bookings/components/CreateBookingModal'
 import { getCourtsManage, createCourt, updateCourt, deleteCourt, addCourtGallery, deleteCourtGallery } from '@/api/courts'
+import { getSettings } from '@/api/core'
 import { formatMoney } from '@/utils/format'
 import { parseApiError } from '@/utils/error'
 import type { Court, CourtType, PlayFormat, CourtPriceSlot } from '@/types/court'
@@ -88,6 +90,18 @@ function formatPriceSlot(s: CourtPriceSlot) {
       <span className="font-medium text-foreground">{formatMoney(s.price_per_hour)}</span>
     </p>
   )
+}
+
+function parseOpenHour(openTime: string | undefined): number {
+  if (!openTime) return 7
+  const [h] = openTime.split(':').map(Number)
+  return h
+}
+
+function parseCloseHour(closeTime: string | undefined, startHour: number): number {
+  if (!closeTime) return 23
+  const [h] = closeTime.split(':').map(Number)
+  return h < startHour ? h + 24 : h
 }
 
 interface CourtFormDialogProps {
@@ -442,6 +456,8 @@ export function CourtsPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards')
   const [courtImageIndex, setCourtImageIndex] = useState<Record<string, number>>({})
+  const [bookingOpen, setBookingOpen] = useState(false)
+  const [bookingCourt, setBookingCourt] = useState<Court | null>(null)
 
   function navigateCourtImage(courtId: number, direction: 'prev' | 'next', total: number) {
     setCourtImageIndex((prev) => {
@@ -454,10 +470,23 @@ export function CourtsPage() {
     })
   }
 
+  function handleBookCourt(court: Court) {
+    setBookingCourt(court)
+    setBookingOpen(true)
+  }
+
   const { data: courts = [], isLoading } = useQuery({
     queryKey: ['courts-manage'],
     queryFn: getCourtsManage,
   })
+
+  const { data: settings = [] } = useQuery({
+    queryKey: ['club-settings'],
+    queryFn: getSettings,
+  })
+
+  const startHour = parseOpenHour(settings.find((s) => s.key === 'OPEN_TIME')?.value)
+  const endHour = parseCloseHour(settings.find((s) => s.key === 'CLOSE_TIME')?.value, startHour)
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteCourt(id),
@@ -634,23 +663,32 @@ export function CourtsPage() {
                         <ActiveBadge isActive={c.is_active} />
                       </div>
 
-                      <div className="mt-4 flex items-center justify-end gap-2 border-t pt-3">
+                      <div className="mt-4 space-y-3 border-t pt-3">
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-10 w-10 sm:h-8 sm:w-8"
-                          onClick={() => { setEditCourt(c); setFormOpen(true) }}
+                          className="w-full"
+                          onClick={() => handleBookCourt(c)}
                         >
-                          <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                          <CalendarPlus className="h-4 w-4" />
+                          Забронировать
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-10 w-10 sm:h-8 sm:w-8 text-destructive"
-                          onClick={() => setDeleteId(c.id)}
-                        >
-                          <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 sm:h-8 sm:w-8"
+                            onClick={() => { setEditCourt(c); setFormOpen(true) }}
+                          >
+                            <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 sm:h-8 sm:w-8 text-destructive"
+                            onClick={() => setDeleteId(c.id)}
+                          >
+                            <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </article>
@@ -670,7 +708,7 @@ export function CourtsPage() {
                   <TableHead>Цена</TableHead>
                   <TableHead>Фото</TableHead>
                   <TableHead>Статус</TableHead>
-                  <TableHead className="w-20" />
+                  <TableHead className="w-36" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -707,6 +745,15 @@ export function CourtsPage() {
                     <TableCell><ActiveBadge isActive={c.is_active} /></TableCell>
                     <TableCell>
                       <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Забронировать"
+                          onClick={() => handleBookCourt(c)}
+                        >
+                          <CalendarPlus className="h-3.5 w-3.5" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8"
                           onClick={() => { setEditCourt(c); setFormOpen(true) }}>
                           <Edit2 className="h-3.5 w-3.5" />
@@ -729,6 +776,17 @@ export function CourtsPage() {
         court={editCourt}
         open={formOpen}
         onClose={() => setFormOpen(false)}
+      />
+
+      <CreateBookingModal
+        open={bookingOpen}
+        onClose={() => {
+          setBookingOpen(false)
+          setBookingCourt(null)
+        }}
+        prefillCourt={bookingCourt?.id}
+        openHour={startHour}
+        closeHour={endHour}
       />
 
       <ConfirmDialog
